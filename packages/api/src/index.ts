@@ -1,8 +1,12 @@
-import express, { type Request, type Response, type NextFunction } from 'express';
+import express, { type Request, type Response } from 'express';
+import cookieParser from 'cookie-parser';
 import pino from 'pino';
 import { config } from './config.js';
 import { API_PREFIX } from '@doc-store/shared';
 import type { HealthCheckResponse } from '@doc-store/shared';
+import { errorHandler } from './middleware/error-handler.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 const logger = pino({
   transport: config.NODE_ENV === 'development'
@@ -13,6 +17,7 @@ const logger = pino({
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check
 app.get(`${API_PREFIX}/health`, (_req: Request, res: Response) => {
@@ -23,15 +28,14 @@ app.get(`${API_PREFIX}/health`, (_req: Request, res: Response) => {
   res.json(body);
 });
 
-// Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  logger.error({ err }, 'Unhandled error');
-  res.status(500).json({
-    error: 'InternalServerError',
-    message: config.NODE_ENV === 'production' ? 'Internal server error' : err.message,
-    statusCode: 500,
-  });
-});
+// Auth routes
+app.use(`${API_PREFIX}/auth`, authRoutes);
+
+// User routes
+app.use(`${API_PREFIX}/users`, userRoutes);
+
+// Global error handler (must be registered last)
+app.use(errorHandler);
 
 app.listen(config.PORT, () => {
   logger.info(`Server listening on port ${config.PORT}`);

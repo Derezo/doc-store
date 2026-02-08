@@ -1,0 +1,282 @@
+import { eq, and, isNull } from 'drizzle-orm';
+import { db } from '../db/index.js';
+import { users, invitations, sessions } from '../db/schema.js';
+import {
+  hashPassword,
+  verifyPassword,
+  generateToken,
+  hashToken,
+} from '../utils/crypto.js';
+import { signAccessToken } from '../utils/jwt.js';
+import {
+  AuthenticationError,
+  NotFoundError,
+  ConflictError,
+  ValidationError,
+} from '../utils/errors.js';
+import type { User } from '@doc-store/shared';
+
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+/**
+ * Convert a DB user row to a public User object.
+ */
+function toPublicUser(row: typeof users.$inferSelect): User {
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.displayName,
+    role: row.role as 'admin' | 'user',
+    isActive: row.isActive,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+/**
+ * Create a session and issue a JWT pair (access token + refresh token).
+ */
+async function createSession(
+  userId: string,
+  email: string,
+  role: string,
+  userAgent?: string,
+  ipAddress?: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const accessToken = await signAccessToken({ userId, email, role });
+  const refreshToken = generateToken(64);
+  const refreshTokenHashed = hashToken(refreshToken);
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+  await db.insert(sessions).values({
+    userId,
+    refreshTokenHash: refreshTokenHashed,
+    userAgent: userAgent ?? null,
+    ipAddress: ipAddress ?? null,
+    expiresAt,
+  });
+
+  return { accessToken, refreshToken };
+}
+
+/**
+ * Register a new user via invitation token.
+ */
+export async function register(
+  email: string,
+  password: string,
+  displayName: string,
+  inviteToken: string,
+  meta?: { userAgent?: string; ipAddress?: string },
+): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  // 1. Validate invitation
+  const [invitation] = await db
+    .select()
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.token, inviteToken),
+        isNull(invitations.acceptedAt),
+      ),
+    )
+    .limit(1);
+
+  if (!invitation) {
+    throw new NotFoundError('Invalid or already used invitation token');
+  }
+
+  if (invitation.expiresAt < new Date()) {
+    throw new ValidationError('Invitation token has expired');
+  }
+
+  if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+    throw new ValidationError(
+      'Email does not match the invitation',
+    );
+  }
+
+  // 2. Check for existing user with this email
+  const [existingUser] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()))
+    .limit(1);
+
+  if (existingUser) {
+    throw new ConflictError('A user with this email already exists');
+  }
+
+  // 3. Create user
+  const passwordHashed = await hashPassword(password);
+
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      email: email.toLowerCase(),
+      passwordHash: passwordHashed,
+      displayName,
+      role: 'user',
+    })
+    .returning();
+
+  // 4. Mark invitation as accepted
+  await db
+    .update(invitations)
+    .set({ acceptedAt: new Date() })
+    .where(eq(invitations.id, invitation.id));
+
+  // 5. Create session
+  const { accessToken, refreshToken } = await createSession(
+    newUser.id,
+    newUser.email,
+    newUser.role,
+    meta?.userAgent,
+    meta?.ipAddress,
+  );
+
+  return {
+    user: toPublicUser(newUser),
+    accessToken,
+    refreshToken,
+  };
+}
+
+/**
+ * Login with email and password.
+ */
+export async function login(
+  email: string,
+  password: string,
+  meta?: { userAgent?: string; ipAddress?: string },
+): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  // 1. Find user
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()))
+    .limit(1);
+
+  if (!user) {
+    throw new AuthenticationError('Invalid email or password');
+  }
+
+  if (!user.isActive) {
+    throw new AuthenticationError('Account is disabled');
+  }
+
+  // 2. Verify password
+  const valid = await verifyPassword(user.passwordHash, password);
+  if (!valid) {
+    throw new AuthenticationError('Invalid email or password');
+  }
+
+  // 3. Create session
+  const { accessToken, refreshToken } = await createSession(
+    user.id,
+    user.email,
+    user.role,
+    meta?.userAgent,
+    meta?.ipAddress,
+  );
+
+  return {
+    user: toPublicUser(user),
+    accessToken,
+    refreshToken,
+  };
+}
+
+/**
+ * Refresh tokens by rotating the refresh token.
+ */
+export async function refresh(
+  currentRefreshToken: string,
+  meta?: { userAgent?: string; ipAddress?: string },
+): Promise<{ user: User; accessToken: string; refreshToken: string }> {
+  const tokenHash = hashToken(currentRefreshToken);
+
+  // 1. Find session with matching refresh token hash
+  const [session] = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.refreshTokenHash, tokenHash))
+    .limit(1);
+
+  if (!session) {
+    throw new AuthenticationError('Invalid refresh token');
+  }
+
+  if (session.expiresAt < new Date()) {
+    // Clean up expired session
+    await db.delete(sessions).where(eq(sessions.id, session.id));
+    throw new AuthenticationError('Refresh token has expired');
+  }
+
+  // 2. Fetch user
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  if (!user || !user.isActive) {
+    await db.delete(sessions).where(eq(sessions.id, session.id));
+    throw new AuthenticationError('User not found or disabled');
+  }
+
+  // 3. Rotate: delete old session, create new one
+  await db.delete(sessions).where(eq(sessions.id, session.id));
+
+  const { accessToken, refreshToken: newRefreshToken } = await createSession(
+    user.id,
+    user.email,
+    user.role,
+    meta?.userAgent,
+    meta?.ipAddress,
+  );
+
+  return {
+    user: toPublicUser(user),
+    accessToken,
+    refreshToken: newRefreshToken,
+  };
+}
+
+/**
+ * Logout by deleting the session.
+ */
+export async function logout(userId: string, refreshToken?: string): Promise<void> {
+  if (refreshToken) {
+    const tokenHash = hashToken(refreshToken);
+    await db
+      .delete(sessions)
+      .where(
+        and(
+          eq(sessions.userId, userId),
+          eq(sessions.refreshTokenHash, tokenHash),
+        ),
+      );
+  } else {
+    // If no refresh token provided, delete all sessions for this user
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+  }
+}
+
+/**
+ * Get a user by ID.
+ */
+export async function getUserById(userId: string): Promise<User> {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  return toPublicUser(user);
+}

@@ -5,7 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().url().default('postgresql://docstore:docstore_dev@localhost:5432/docstore'),
   JWT_SECRET: z.string().min(32).default('dev-secret-change-me-in-production-please-32chars'),
-  DATA_DIR: z.string().default('/data/vaults'),
+  DATA_DIR: z.string().default('./data/vaults'),
   BASE_URL: z.string().url().default('http://localhost:4000'),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
