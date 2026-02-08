@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
+import path from 'node:path';
 import { eq, and, like, asc, desc } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { documents, documentVersions } from '../db/schema.js';
 import { NotFoundError } from '../utils/errors.js';
 import * as filesystemService from './filesystem.service.js';
 import * as vaultService from './vault.service.js';
+import { markRecentlyWritten } from './sync.service.js';
 import {
   extractFrontmatter,
   extractTitle,
@@ -137,6 +139,10 @@ export async function put(
   // 3. Write file to disk (atomic)
   await filesystemService.writeFile(vaultPath, docPath, content);
 
+  // Mark file as recently written so the sync watcher doesn't double-process
+  const absFilePath = path.resolve(vaultPath, docPath);
+  markRecentlyWritten(absFilePath);
+
   // 4. Extract metadata from content
   const { data: frontmatterData, content: markdownContent } =
     extractFrontmatter(content);
@@ -245,6 +251,10 @@ export async function remove(
 
   // Delete from filesystem
   await filesystemService.deleteFile(vaultPath, docPath);
+
+  // Mark file as recently written so the sync watcher doesn't double-process
+  const absDeletePath = path.resolve(vaultPath, docPath);
+  markRecentlyWritten(absDeletePath);
 
   // Delete from DB (cascade deletes versions)
   await db.delete(documents).where(eq(documents.id, doc.id));

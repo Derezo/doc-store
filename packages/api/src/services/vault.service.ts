@@ -161,6 +161,27 @@ export async function update(
 }
 
 /**
+ * Get a vault by slug, verifying ownership.
+ * Used by WebDAV to resolve vault from URL path.
+ */
+export async function getBySlug(
+  userId: string,
+  slug: string,
+): Promise<typeof vaults.$inferSelect> {
+  const [vault] = await db
+    .select()
+    .from(vaults)
+    .where(and(eq(vaults.userId, userId), eq(vaults.slug, slug)))
+    .limit(1);
+
+  if (!vault) {
+    throw new NotFoundError('Vault not found');
+  }
+
+  return vault;
+}
+
+/**
  * Delete a vault and its filesystem directory.
  */
 export async function remove(userId: string, vaultId: string): Promise<void> {

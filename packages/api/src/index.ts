@@ -10,6 +10,8 @@ import userRoutes from './routes/user.routes.js';
 import vaultRoutes from './routes/vaults.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import apiKeyRoutes from './routes/api-keys.routes.js';
+import webdavRouter from './webdav/index.js';
+import * as syncService from './services/sync.service.js';
 
 const logger = pino({
   transport: config.NODE_ENV === 'development'
@@ -18,6 +20,10 @@ const logger = pino({
 });
 
 const app = express();
+
+// ── WebDAV routes (mounted BEFORE express.json() to allow raw body streaming) ──
+// WebDAV PUT requests send raw file content that should not be parsed as JSON.
+app.use('/webdav', webdavRouter);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -49,9 +55,43 @@ app.use(`${API_PREFIX}/api-keys`, apiKeyRoutes);
 // Global error handler (must be registered last)
 app.use(errorHandler);
 
-app.listen(config.PORT, () => {
+const server = app.listen(config.PORT, () => {
   logger.info(`Server listening on port ${config.PORT}`);
   logger.info(`Health check: http://localhost:${config.PORT}${API_PREFIX}/health`);
+  logger.info(`WebDAV endpoint: http://localhost:${config.PORT}/webdav/:vaultSlug/`);
+
+  // Start filesystem watcher
+  syncService.start();
+
+  // Run initial reconciliation (async, don't block startup)
+  syncService.reconcile().catch((err) => {
+    logger.error({ err }, 'Initial reconciliation failed');
+  });
 });
+
+// ── Graceful shutdown ──────────────────────────────────────────────────
+
+function shutdown(signal: string) {
+  logger.info({ signal }, 'Received shutdown signal');
+
+  syncService.stop().then(() => {
+    server.close(() => {
+      logger.info('Server shut down gracefully');
+      process.exit(0);
+    });
+
+    // Force exit after 10 seconds if graceful shutdown stalls
+    setTimeout(() => {
+      logger.warn('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10_000);
+  }).catch((err) => {
+    logger.error({ err }, 'Error during sync service shutdown');
+    process.exit(1);
+  });
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 export default app;
