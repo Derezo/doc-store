@@ -455,6 +455,161 @@ body {
   gap: 0.5rem;
 }
 
+/* ============================================
+   Tiptap editor styles
+   ============================================ */
+
+/* Tiptap placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #a1a1aa;
+  pointer-events: none;
+  height: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tiptap p.is-editor-empty:first-child::before {
+    color: #52525b;
+  }
+}
+
+/* Tiptap editor focus ring */
+.tiptap:focus {
+  outline: none;
+}
+
+/* Tiptap task list */
+.tiptap ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.tiptap ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* Tiptap table */
+.tiptap table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.tiptap table td,
+.tiptap table th {
+  border: 1px solid #e4e4e7;
+  padding: 0.5rem 0.75rem;
+  min-width: 100px;
+  text-align: left;
+  vertical-align: top;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tiptap table td,
+  .tiptap table th {
+    border-color: #3f3f46;
+  }
+}
+
+.tiptap table th {
+  background-color: #f4f4f5;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tiptap table th {
+    background-color: #27272a;
+  }
+}
+
+/* Tiptap code block */
+.tiptap pre {
+  background: #f4f4f5;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tiptap pre {
+    background: #18181b;
+  }
+}
+
+.tiptap pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Tiptap image */
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+/* Tiptap selected node highlight */
+.tiptap .ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  border-radius: 0.25rem;
+}
+
+/* ============================================
+   CodeMirror editor overrides
+   ============================================ */
+
+.codemirror-editor .cm-editor {
+  height: 100%;
+}
+
+.codemirror-editor .cm-scroller {
+  overflow: auto;
+}
+
+/* Light mode CodeMirror gutter colors */
+.codemirror-editor .cm-gutters {
+  border-right: 1px solid #e4e4e7;
+  background-color: #fafafa;
+}
+
+.codemirror-editor .cm-lineNumbers .cm-gutterElement {
+  padding: 0 0.5rem;
+  min-width: 2.5rem;
+  color: #a1a1aa;
+}
+
+@media (prefers-color-scheme: dark) {
+  .codemirror-editor .cm-gutters {
+    border-right-color: #3f3f46;
+    background-color: #18181b;
+  }
+
+  .codemirror-editor .cm-lineNumbers .cm-gutterElement {
+    color: #52525b;
+  }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

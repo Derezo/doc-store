@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Vault, TreeNode } from '@doc-store/shared';
 import { VaultSwitcher } from './VaultSwitcher';
 import { FileTree } from '@/components/browser/FileTree';
-import { X, Loader2 } from 'lucide-react';
+import { NewFileDialog } from '@/components/editor/NewFileDialog';
+import { X, Loader2, FilePlus } from 'lucide-react';
 
 interface SidebarProps {
   vaults: Vault[];
@@ -30,6 +31,8 @@ export function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
+  const [showNewFile, setShowNewFile] = useState(false);
+
   // Close sidebar on Escape key
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
@@ -82,6 +85,19 @@ export function Sidebar({
           <VaultSwitcher vaults={vaults} currentVault={currentVault} />
         </div>
 
+        {/* New file button */}
+        {currentVault && (
+          <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
+            <button
+              onClick={() => setShowNewFile(true)}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              <FilePlus className="h-4 w-4" />
+              <span>New file</span>
+            </button>
+          </div>
+        )}
+
         {/* File tree */}
         <div className="flex-1 overflow-y-auto px-2 py-2">
           {!currentVault ? (
@@ -105,6 +121,15 @@ export function Sidebar({
           )}
         </div>
       </aside>
+
+      {/* New file dialog */}
+      {currentVault && (
+        <NewFileDialog
+          vaultId={currentVault.id}
+          isOpen={showNewFile}
+          onClose={() => setShowNewFile(false)}
+        />
+      )}
     </>
   );
 }
