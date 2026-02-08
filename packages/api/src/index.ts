@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes.js';
 import vaultRoutes from './routes/vaults.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import apiKeyRoutes from './routes/api-keys.routes.js';
+import searchRoutes from './routes/search.routes.js';
 import webdavRouter from './webdav/index.js';
 import * as syncService from './services/sync.service.js';
 
@@ -51,6 +52,9 @@ app.use(`${API_PREFIX}/vaults/:vaultId/documents`, documentRoutes);
 
 // API key routes
 app.use(`${API_PREFIX}/api-keys`, apiKeyRoutes);
+
+// Search routes
+app.use(`${API_PREFIX}/search`, searchRoutes);
 
 // Global error handler (must be registered last)
 app.use(errorHandler);

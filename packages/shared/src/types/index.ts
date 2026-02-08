@@ -118,3 +118,23 @@ export interface CreateApiKeyResponse {
   apiKey: ApiKeyMeta;
   fullKey: string;
 }
+
+// Search types
+
+export interface SearchResult {
+  documentId: string;
+  vaultId: string;
+  vaultName: string;
+  path: string;
+  title: string | null;
+  snippet: string;
+  tags: string[];
+  rank: number;
+  fileModifiedAt: string;
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+  total: number;
+  query: string;
+}

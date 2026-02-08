@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/stores/auth.store';
 import { useVaultStore } from '@/lib/stores/vault.store';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { SearchModal } from '@/components/search/SearchModal';
 
 export default function AppLayout({
   children,
@@ -27,6 +28,7 @@ export default function AppLayout({
   } = useVaultStore();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Extract vaultId from URL params
   const vaultId = params?.vaultId as string | undefined;
@@ -73,6 +75,26 @@ export default function AppLayout({
     setSidebarOpen(false);
   }, [pathname]);
 
+  // Cmd+K / Ctrl+K keyboard shortcut for search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleOpenSearch = useCallback(() => {
+    setSearchOpen(true);
+  }, []);
+
+  const handleCloseSearch = useCallback(() => {
+    setSearchOpen(false);
+  }, []);
+
   const handleToggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
@@ -112,6 +134,7 @@ export default function AppLayout({
         <Header
           onToggleSidebar={handleToggleSidebar}
           showSidebarToggle={isVaultContext}
+          onOpenSearch={handleOpenSearch}
         />
 
         <main className="flex-1 overflow-y-auto">
@@ -120,6 +143,9 @@ export default function AppLayout({
           </div>
         </main>
       </div>
+
+      {/* Search modal (Cmd+K) */}
+      <SearchModal isOpen={searchOpen} onClose={handleCloseSearch} />
     </div>
   );
 }

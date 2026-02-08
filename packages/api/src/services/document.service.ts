@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
-import { eq, and, like, asc, desc } from 'drizzle-orm';
+import { eq, and, like, asc, desc, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { documents, documentVersions } from '../db/schema.js';
 import { NotFoundError } from '../utils/errors.js';
@@ -158,6 +158,7 @@ export async function put(
 
   if (existingDoc) {
     // UPDATE existing document
+    const tagsText = (tags ?? []).join(' ');
     const [updated] = await db
       .update(documents)
       .set({
@@ -167,6 +168,7 @@ export async function put(
         frontmatter: frontmatterJson,
         tags,
         strippedContent,
+        contentTsv: sql`to_tsvector('english', ${title ?? ''} || ' ' || ${tagsText} || ' ' || ${strippedContent})`,
         fileModifiedAt: now,
         updatedAt: now,
       })
@@ -196,6 +198,7 @@ export async function put(
     return toPublicDocument(updated);
   } else {
     // CREATE new document
+    const newTagsText = (tags ?? []).join(' ');
     const [newDoc] = await db
       .insert(documents)
       .values({
@@ -207,6 +210,7 @@ export async function put(
         frontmatter: frontmatterJson,
         tags,
         strippedContent,
+        contentTsv: sql`to_tsvector('english', ${title ?? ''} || ' ' || ${newTagsText} || ' ' || ${strippedContent})`,
         fileCreatedAt: now,
         fileModifiedAt: now,
       })

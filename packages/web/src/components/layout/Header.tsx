@@ -17,6 +17,7 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   showSidebarToggle: boolean;
   breadcrumbs?: React.ReactNode;
+  onOpenSearch?: () => void;
 }
 
 /**
@@ -26,6 +27,7 @@ export function Header({
   onToggleSidebar,
   showSidebarToggle,
   breadcrumbs,
+  onOpenSearch,
 }: HeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
@@ -70,9 +72,7 @@ export function Header({
       <div className="flex flex-1 justify-center">
         <button
           className="flex w-full max-w-md items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-500 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
-          onClick={() => {
-            // Search functionality placeholder -- will be implemented in Phase 7
-          }}
+          onClick={() => onOpenSearch?.()}
         >
           <Search className="h-4 w-4" />
           <span className="flex-1 text-left">Search documents...</span>
