@@ -78,3 +78,26 @@ export const putDocumentSchema = z.object({
   content: z.string().max(10 * 1024 * 1024, 'Content must be at most 10MB'),
   createIntermediateFolders: z.boolean().optional().default(false),
 });
+
+// API Key schemas
+
+export const createApiKeySchema = z.object({
+  name: z
+    .string()
+    .min(1, 'API key name is required')
+    .max(100, 'API key name must be at most 100 characters'),
+  scopes: z
+    .array(z.enum(['read', 'write']))
+    .min(1, 'At least one scope is required'),
+  vaultId: z.string().uuid('Invalid vault ID').optional(),
+  expiresAt: z.string().datetime('Invalid expiration date').optional(),
+});
+
+export const updateApiKeySchema = z.object({
+  name: z
+    .string()
+    .min(1, 'API key name is required')
+    .max(100, 'API key name must be at most 100 characters')
+    .optional(),
+  isActive: z.boolean().optional(),
+});

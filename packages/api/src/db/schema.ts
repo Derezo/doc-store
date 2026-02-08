@@ -41,6 +41,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   invitations: many(invitations),
   sessions: many(sessions),
   vaults: many(vaults),
+  apiKeys: many(apiKeys),
 }));
 
 // ── Invitations ────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ export const vaultsRelations = relations(vaults, ({ one, many }) => ({
     references: [users.id],
   }),
   documents: many(documents),
+  apiKeys: many(apiKeys),
 }));
 
 // ── Documents ─────────────────────────────────────────────────────────
@@ -185,5 +187,41 @@ export const documentVersionsRelations = relations(documentVersions, ({ one }) =
   changedByUser: one(users, {
     fields: [documentVersions.changedBy],
     references: [users.id],
+  }),
+}));
+
+// ── API Keys ─────────────────────────────────────────────────────────
+
+export const apiKeys = pgTable(
+  'api_keys',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    keyPrefix: varchar('key_prefix', { length: 8 }).notNull(),
+    keyHash: varchar('key_hash', { length: 255 }).notNull(),
+    scopes: text('scopes').array().notNull().default(['read', 'write']),
+    vaultId: uuid('vault_id').references(() => vaults.id, { onDelete: 'cascade' }),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_api_keys_user_id').on(table.userId),
+    index('idx_api_keys_key_prefix').on(table.keyPrefix),
+  ],
+);
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+  vault: one(vaults, {
+    fields: [apiKeys.vaultId],
+    references: [vaults.id],
   }),
 }));

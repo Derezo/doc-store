@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import vaultRoutes from './routes/vaults.routes.js';
 import documentRoutes from './routes/documents.routes.js';
+import apiKeyRoutes from './routes/api-keys.routes.js';
 
 const logger = pino({
   transport: config.NODE_ENV === 'development'
@@ -41,6 +42,9 @@ app.use(`${API_PREFIX}/vaults`, vaultRoutes);
 
 // Document routes (nested under vaults)
 app.use(`${API_PREFIX}/vaults/:vaultId/documents`, documentRoutes);
+
+// API key routes
+app.use(`${API_PREFIX}/api-keys`, apiKeyRoutes);
 
 // Global error handler (must be registered last)
 app.use(errorHandler);

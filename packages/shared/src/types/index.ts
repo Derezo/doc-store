@@ -92,3 +92,29 @@ export interface DocumentListItem {
   sizeBytes: number;
   fileModifiedAt: string;
 }
+
+// API Key types
+
+export interface ApiKeyMeta {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  vaultId: string | null;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CreateApiKeyRequest {
+  name: string;
+  scopes: string[];
+  vaultId?: string;
+  expiresAt?: string;
+}
+
+export interface CreateApiKeyResponse {
+  apiKey: ApiKeyMeta;
+  fullKey: string;
+}

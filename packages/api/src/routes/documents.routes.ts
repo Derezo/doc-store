@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { putDocumentSchema } from '@doc-store/shared';
 import { validate } from '../middleware/validate.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireScope, requireVaultAccess } from '../middleware/auth.js';
 import { validatePath } from '../services/filesystem.service.js';
 import * as documentService from '../services/document.service.js';
 
@@ -23,8 +23,12 @@ function getWildcardPath(params: Record<string, any>): string {
 // All document routes require authentication
 router.use(requireAuth);
 
+// Vault access check — documents are nested under /vaults/:vaultId/documents
+const checkVaultAccess = requireVaultAccess((req) => req.params.vaultId as string);
+router.use(checkVaultAccess);
+
 // GET /vaults/:vaultId/documents — list documents in vault (optionally filtered by ?dir=path)
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireScope('read'), async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const dirPath = req.query.dir as string | undefined;
   const docs = await documentService.list(
@@ -37,7 +41,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // GET /vaults/:vaultId/documents/*path/versions — get document versions
 // This must be defined before the general wildcard GET to avoid conflicts
-router.get('/*path/versions', async (req: Request, res: Response) => {
+router.get('/*path/versions', requireScope('read'), async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const docPath = getWildcardPath(req.params);
   const versions = await documentService.getVersions(
@@ -49,7 +53,7 @@ router.get('/*path/versions', async (req: Request, res: Response) => {
 });
 
 // GET /vaults/:vaultId/documents/*path — get document content + metadata
-router.get('/*path', async (req: Request, res: Response) => {
+router.get('/*path', requireScope('read'), async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const docPath = getWildcardPath(req.params);
   const result = await documentService.get(
@@ -66,6 +70,7 @@ router.get('/*path', async (req: Request, res: Response) => {
 // PUT /vaults/:vaultId/documents/*path — create/update document
 router.put(
   '/*path',
+  requireScope('write'),
   validate(putDocumentSchema),
   async (req: Request, res: Response) => {
     const vaultId = req.params.vaultId as string;
@@ -87,7 +92,7 @@ router.put(
 );
 
 // DELETE /vaults/:vaultId/documents/*path — delete document
-router.delete('/*path', async (req: Request, res: Response) => {
+router.delete('/*path', requireScope('write'), async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const docPath = getWildcardPath(req.params);
   await documentService.remove(

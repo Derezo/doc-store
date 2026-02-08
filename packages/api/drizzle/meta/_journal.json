@@ -22,6 +22,13 @@
       "when": 1770572406653,
       "tag": "0002_amazing_beyonder",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770573311828,
+      "tag": "0003_mighty_surge",
+      "breakpoints": true
     }
   ]
 }

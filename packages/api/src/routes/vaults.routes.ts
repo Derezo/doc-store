@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createVaultSchema, updateVaultSchema } from '@doc-store/shared';
 import { validate } from '../middleware/validate.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireScope, requireVaultAccess } from '../middleware/auth.js';
 import * as vaultService from '../services/vault.service.js';
 import * as documentService from '../services/document.service.js';
 
@@ -10,8 +10,11 @@ const router = Router();
 // All vault routes require authentication
 router.use(requireAuth);
 
+// Vault access check for routes with :vaultId
+const checkVaultAccess = requireVaultAccess((req) => req.params.vaultId as string);
+
 // GET /vaults — list user's vaults
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireScope('read'), async (req: Request, res: Response) => {
   const vaultList = await vaultService.list(req.user!.userId);
   res.json({ vaults: vaultList });
 });
@@ -19,6 +22,7 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /vaults — create vault
 router.post(
   '/',
+  requireScope('write'),
   validate(createVaultSchema),
   async (req: Request, res: Response) => {
     const { name, description } = req.body;
@@ -28,7 +32,7 @@ router.post(
 );
 
 // GET /vaults/:vaultId — get vault details
-router.get('/:vaultId', async (req: Request, res: Response) => {
+router.get('/:vaultId', requireScope('read'), checkVaultAccess, async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const vault = await vaultService.get(req.user!.userId, vaultId);
   res.json({ vault });
@@ -37,6 +41,8 @@ router.get('/:vaultId', async (req: Request, res: Response) => {
 // PATCH /vaults/:vaultId — update vault
 router.patch(
   '/:vaultId',
+  requireScope('write'),
+  checkVaultAccess,
   validate(updateVaultSchema),
   async (req: Request, res: Response) => {
     const vaultId = req.params.vaultId as string;
@@ -50,14 +56,14 @@ router.patch(
 );
 
 // DELETE /vaults/:vaultId — delete vault
-router.delete('/:vaultId', async (req: Request, res: Response) => {
+router.delete('/:vaultId', requireScope('write'), checkVaultAccess, async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   await vaultService.remove(req.user!.userId, vaultId);
   res.json({ message: 'Vault deleted successfully' });
 });
 
 // POST /vaults/:vaultId/tree — get full vault tree
-router.post('/:vaultId/tree', async (req: Request, res: Response) => {
+router.post('/:vaultId/tree', requireScope('read'), checkVaultAccess, async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const treeNodes = await documentService.tree(
     req.user!.userId,
