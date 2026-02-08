@@ -7,7 +7,27 @@ import remarkMath from 'remark-math';
 import remarkFrontmatter from 'remark-frontmatter';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeRaw from 'rehype-raw';
+
+// Extended sanitization schema: allow rehype-raw HTML through but block scripts/iframes
+const sanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    'mark', 'div', 'span', 'details', 'summary',
+    'sup', 'sub', 'abbr', 'kbd', 'var', 'samp',
+  ],
+  attributes: {
+    ...defaultSchema.attributes,
+    div: [...(defaultSchema.attributes?.div ?? []), 'className', 'class'],
+    span: [...(defaultSchema.attributes?.span ?? []), 'className', 'class'],
+    code: [...(defaultSchema.attributes?.code ?? []), 'className', 'class'],
+    pre: [...(defaultSchema.attributes?.pre ?? []), 'className', 'class'],
+    a: [...(defaultSchema.attributes?.a ?? []), 'href', 'target', 'rel'],
+    img: [...(defaultSchema.attributes?.img ?? []), 'src', 'alt', 'loading'],
+  },
+};
 import { transformWikilinks } from '@/lib/markdown/remark-wikilinks';
 import { transformCallouts } from '@/lib/markdown/callouts';
 import {
@@ -148,7 +168,7 @@ export function MarkdownViewer({ content, vaultId, className }: MarkdownViewerPr
     <div className={`prose prose-zinc dark:prose-invert max-w-none ${className ?? ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkFrontmatter]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight, rehypeKatex]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeHighlight, rehypeKatex]}
         components={components}
       >
         {processedContent}

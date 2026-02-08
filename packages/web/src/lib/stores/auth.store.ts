@@ -75,6 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         {
           method: 'POST',
           credentials: 'include',
+          headers: { 'X-Requested-With': 'doc-store' },
         },
       );
 

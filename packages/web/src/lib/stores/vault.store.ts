@@ -43,7 +43,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({ treeLoading: true });
     try {
       const data = await api
-        .post(`api/v1/vaults/${vaultId}/tree`)
+        .get(`api/v1/vaults/${vaultId}/tree`)
         .json<{ tree: TreeNode[] }>();
       set({ tree: data.tree, treeLoading: false });
     } catch {

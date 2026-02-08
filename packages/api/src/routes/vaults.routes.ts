@@ -62,8 +62,8 @@ router.delete('/:vaultId', requireScope('write'), checkVaultAccess, async (req: 
   res.json({ message: 'Vault deleted successfully' });
 });
 
-// POST /vaults/:vaultId/tree — get full vault tree
-router.post('/:vaultId/tree', requireScope('read'), checkVaultAccess, async (req: Request, res: Response) => {
+// GET /vaults/:vaultId/tree — get full vault tree
+router.get('/:vaultId/tree', requireScope('read'), checkVaultAccess, async (req: Request, res: Response) => {
   const vaultId = req.params.vaultId as string;
   const treeNodes = await documentService.tree(
     req.user!.userId,

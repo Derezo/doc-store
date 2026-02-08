@@ -323,6 +323,32 @@ async function syncDeleteToDb(
   }
 }
 
+/**
+ * Recursively sync all .md files in a directory to the DB.
+ * Used after directory MOVE/COPY operations.
+ */
+async function syncDirectoryToDb(
+  auth: WebDavAuthResult,
+  dirAbsPath: string,
+  dirRelPath: string,
+): Promise<void> {
+  try {
+    const entries = await fs.readdir(dirAbsPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryRelPath = dirRelPath ? `${dirRelPath}/${entry.name}` : entry.name;
+      const entryAbsPath = path.join(dirAbsPath, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === '.obsidian') continue;
+        await syncDirectoryToDb(auth, entryAbsPath, entryRelPath);
+      } else if (entry.name.endsWith('.md')) {
+        syncFileToDb(auth, entryRelPath, entryAbsPath).catch(() => {});
+      }
+    }
+  } catch (err) {
+    logger.error({ err, path: dirRelPath }, 'Failed to sync directory to DB after move/copy');
+  }
+}
+
 // ── Router ─────────────────────────────────────────────────────────────
 
 const webdavRouter = Router();
@@ -336,15 +362,13 @@ webdavRouter.use((req: Request, res: Response, next) => {
 
   if (origin && OBSIDIAN_ORIGINS.some((o) => origin.startsWith(o))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (origin) {
-    // Allow any origin for WebDAV (clients may send various origins)
-    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
+  // Non-Obsidian origins do not get CORS headers (browser will block cross-origin requests)
 
   res.setHeader('Access-Control-Allow-Methods', WEBDAV_METHODS);
   res.setHeader('Access-Control-Allow-Headers', WEBDAV_HEADERS);
   res.setHeader('Access-Control-Expose-Headers', 'DAV, Content-Type, Allow, ETag');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 
   // DAV compliance header
@@ -724,9 +748,11 @@ async function handleMove(
   markRecentlyWritten(absPath);
   markRecentlyWritten(destAbsPath);
 
-  // Sync: delete old path, add new path
+  // Sync: delete old path, add new path(s)
   syncDeleteToDb(auth, relPath).catch(() => {});
-  if (!sourceStat.isDirectory()) {
+  if (sourceStat.isDirectory()) {
+    syncDirectoryToDb(auth, destAbsPath, destRelPath).catch(() => {});
+  } else {
     syncFileToDb(auth, destRelPath, destAbsPath).catch(() => {});
   }
 
@@ -831,8 +857,10 @@ async function handleCopy(
 
   markRecentlyWritten(destAbsPath);
 
-  // Sync new file to DB
-  if (!sourceStat.isDirectory()) {
+  // Sync new file(s) to DB
+  if (sourceStat.isDirectory()) {
+    syncDirectoryToDb(auth, destAbsPath, destRelPath).catch(() => {});
+  } else {
     syncFileToDb(auth, destRelPath, destAbsPath).catch(() => {});
   }
 

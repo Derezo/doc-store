@@ -139,8 +139,6 @@ export const documents = pgTable(
   },
   (table) => [
     uniqueIndex('documents_vault_id_path_idx').on(table.vaultId, table.path),
-    index('idx_documents_vault_id').on(table.vaultId),
-    index('idx_documents_path').on(table.vaultId, table.path),
     index('idx_documents_tags').using('gin', table.tags),
     index('idx_documents_tsv').using('gin', table.contentTsv),
     index('idx_documents_frontmatter').using('gin', table.frontmatter),

@@ -71,7 +71,17 @@ router.post(
 );
 
 // POST /auth/refresh
+// Requires X-Requested-With header for CSRF protection (cannot be sent cross-origin without CORS)
 router.post('/refresh', async (req: Request, res: Response) => {
+  if (!req.headers['x-requested-with']) {
+    res.status(403).json({
+      error: 'CSRF_ERROR',
+      message: 'Missing X-Requested-With header',
+      statusCode: 403,
+    });
+    return;
+  }
+
   const refreshToken = req.cookies?.[REFRESH_COOKIE];
 
   if (!refreshToken) {

@@ -275,6 +275,11 @@ export async function list(
   // Verify vault ownership
   await vaultService.getRow(userId, vaultId);
 
+  // Escape SQL LIKE wildcards in directory path to prevent wildcard injection
+  const escapedDirPath = dirPath
+    ? dirPath.replace(/%/g, '\\%').replace(/_/g, '\\_')
+    : undefined;
+
   let query = db
     .select({
       path: documents.path,
@@ -285,10 +290,10 @@ export async function list(
     })
     .from(documents)
     .where(
-      dirPath
+      escapedDirPath
         ? and(
             eq(documents.vaultId, vaultId),
-            like(documents.path, `${dirPath}/%`),
+            like(documents.path, `${escapedDirPath}/%`),
           )
         : eq(documents.vaultId, vaultId),
     )

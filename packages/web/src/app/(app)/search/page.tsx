@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Search, FileText, ChevronRight, Loader2, Tag } from 'lucide-react';
+
+/** Sanitize snippets: only allow <mark> tags for highlighting. */
+function sanitizeSnippet(html: string): string {
+  const escaped = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return escaped
+    .replace(/&lt;mark&gt;/gi, '<mark>')
+    .replace(/&lt;\/mark&gt;/gi, '</mark>');
+}
 import { useSearch } from '@/hooks/useSearch';
 import { useVaultStore } from '@/lib/stores/vault.store';
 
@@ -169,7 +177,7 @@ export default function SearchPage() {
                 {result.snippet && (
                   <div
                     className="mt-2 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400 [&_mark]:rounded [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-zinc-900 dark:[&_mark]:bg-yellow-800 dark:[&_mark]:text-yellow-100"
-                    dangerouslySetInnerHTML={{ __html: result.snippet }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeSnippet(result.snippet) }}
                   />
                 )}
 

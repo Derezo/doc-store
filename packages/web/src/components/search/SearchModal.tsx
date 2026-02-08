@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import { Search, FileText, X, Loader2 } from 'lucide-react';
 import { useSearch } from '@/hooks/useSearch';
 
+/**
+ * Sanitize search snippets to only allow <mark> tags.
+ * Prevents XSS from ts_headline output by escaping everything first,
+ * then restoring only the safe <mark>/<\/mark> delimiters.
+ */
+function sanitizeSnippet(html: string): string {
+  const escaped = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return escaped
+    .replace(/&lt;mark&gt;/gi, '<mark>')
+    .replace(/&lt;\/mark&gt;/gi, '</mark>');
+}
+
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -185,7 +197,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         {result.snippet && (
                           <div
                             className="mt-1 line-clamp-2 text-xs text-zinc-600 dark:text-zinc-400 [&_mark]:rounded [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-zinc-900 dark:[&_mark]:bg-yellow-800 dark:[&_mark]:text-yellow-100"
-                            dangerouslySetInnerHTML={{ __html: result.snippet }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeSnippet(result.snippet) }}
                           />
                         )}
                         {/* Tags */}

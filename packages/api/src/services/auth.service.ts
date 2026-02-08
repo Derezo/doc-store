@@ -1,4 +1,4 @@
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users, invitations, sessions } from '../db/schema.js';
 import {
@@ -74,63 +74,70 @@ export async function register(
   inviteToken: string,
   meta?: { userAgent?: string; ipAddress?: string },
 ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
-  // 1. Validate invitation
-  const [invitation] = await db
-    .select()
-    .from(invitations)
-    .where(
-      and(
-        eq(invitations.token, inviteToken),
-        isNull(invitations.acceptedAt),
-      ),
-    )
-    .limit(1);
-
-  if (!invitation) {
-    throw new NotFoundError('Invalid or already used invitation token');
-  }
-
-  if (invitation.expiresAt < new Date()) {
-    throw new ValidationError('Invitation token has expired');
-  }
-
-  if (invitation.email.toLowerCase() !== email.toLowerCase()) {
-    throw new ValidationError(
-      'Email does not match the invitation',
-    );
-  }
-
-  // 2. Check for existing user with this email
-  const [existingUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email.toLowerCase()))
-    .limit(1);
-
-  if (existingUser) {
-    throw new ConflictError('A user with this email already exists');
-  }
-
-  // 3. Create user
+  // Hash password before transaction (argon2 is slow, don't hold a transaction open)
   const passwordHashed = await hashPassword(password);
 
-  const [newUser] = await db
-    .insert(users)
-    .values({
-      email: email.toLowerCase(),
-      passwordHash: passwordHashed,
-      displayName,
-      role: 'user',
-    })
-    .returning();
+  // Wrap in a transaction to prevent TOCTOU race conditions
+  const newUser = await db.transaction(async (tx) => {
+    // 1. Lock and validate invitation (SELECT ... FOR UPDATE)
+    const [invitation] = await tx
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.token, inviteToken),
+          isNull(invitations.acceptedAt),
+        ),
+      )
+      .for('update')
+      .limit(1);
 
-  // 4. Mark invitation as accepted
-  await db
-    .update(invitations)
-    .set({ acceptedAt: new Date() })
-    .where(eq(invitations.id, invitation.id));
+    if (!invitation) {
+      throw new NotFoundError('Invalid or already used invitation token');
+    }
 
-  // 5. Create session
+    if (invitation.expiresAt < new Date()) {
+      throw new ValidationError('Invitation token has expired');
+    }
+
+    if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+      throw new ValidationError(
+        'Email does not match the invitation',
+      );
+    }
+
+    // 2. Check for existing user with this email
+    const [existingUser] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existingUser) {
+      throw new ConflictError('A user with this email already exists');
+    }
+
+    // 3. Create user
+    const [user] = await tx
+      .insert(users)
+      .values({
+        email: email.toLowerCase(),
+        passwordHash: passwordHashed,
+        displayName,
+        role: 'user',
+      })
+      .returning();
+
+    // 4. Mark invitation as accepted
+    await tx
+      .update(invitations)
+      .set({ acceptedAt: new Date() })
+      .where(eq(invitations.id, invitation.id));
+
+    return user;
+  });
+
+  // 5. Create session (outside transaction — not critical for atomicity)
   const { accessToken, refreshToken } = await createSession(
     newUser.id,
     newUser.email,

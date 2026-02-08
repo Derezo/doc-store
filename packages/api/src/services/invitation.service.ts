@@ -17,7 +17,7 @@ export interface InvitationWithInviter {
   invitedBy: string;
   inviterName: string;
   inviterEmail: string;
-  token: string;
+  token?: string;
   expiresAt: string;
   acceptedAt: string | null;
   createdAt: string;
@@ -93,7 +93,7 @@ export async function create(
     logger.error({ err, email }, 'Failed to send invitation email, but invitation was created');
   }
 
-  return toInvitationWithInviter(invitation, admin);
+  return toInvitationWithInviter(invitation, admin, true);
 }
 
 /**
@@ -155,6 +155,7 @@ export async function revoke(
 function toInvitationWithInviter(
   invitation: typeof invitations.$inferSelect,
   inviter: { displayName: string; email: string },
+  includeToken = false,
 ): InvitationWithInviter {
   const now = new Date();
   let status: 'pending' | 'accepted' | 'expired';
@@ -167,16 +168,21 @@ function toInvitationWithInviter(
     status = 'pending';
   }
 
-  return {
+  const result: InvitationWithInviter = {
     id: invitation.id,
     email: invitation.email,
     invitedBy: invitation.invitedBy,
     inviterName: inviter.displayName,
     inviterEmail: inviter.email,
-    token: invitation.token,
     expiresAt: invitation.expiresAt.toISOString(),
     acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
     createdAt: invitation.createdAt.toISOString(),
     status,
   };
+
+  if (includeToken) {
+    result.token = invitation.token;
+  }
+
+  return result;
 }
