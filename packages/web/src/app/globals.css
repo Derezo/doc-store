@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* KaTeX math rendering */
+@import "katex/dist/katex.min.css";
+
+/* Syntax highlighting — GitHub theme */
+@import "highlight.js/styles/github.min.css";
 
 @theme {
   --color-background: #ffffff;
@@ -16,4 +23,455 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================
+   Callout block styles (Obsidian-compatible)
+   ============================================ */
+
+.callout {
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  border-left: 4px solid;
+  padding: 0.75rem 1rem;
+}
+
+.callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.callout-content {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.callout-content p:first-child {
+  margin-top: 0;
+}
+
+.callout-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Callout icon placeholders — rendered via data attributes */
+.callout-icon {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.callout-icon::before {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Note / Info */
+.callout-note,
+.callout-info {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-note,
+  .callout-info {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+.callout-note .callout-title,
+.callout-info .callout-title {
+  color: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-note .callout-title,
+  .callout-info .callout-title {
+    color: #60a5fa;
+  }
+}
+
+/* Tip / Hint */
+.callout-tip,
+.callout-hint {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-tip,
+  .callout-hint {
+    background-color: rgba(16, 185, 129, 0.1);
+  }
+}
+
+.callout-tip .callout-title,
+.callout-hint .callout-title {
+  color: #059669;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-tip .callout-title,
+  .callout-hint .callout-title {
+    color: #34d399;
+  }
+}
+
+/* Warning / Caution */
+.callout-warning,
+.callout-caution {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-warning,
+  .callout-caution {
+    background-color: rgba(245, 158, 11, 0.1);
+  }
+}
+
+.callout-warning .callout-title,
+.callout-caution .callout-title {
+  color: #d97706;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-warning .callout-title,
+  .callout-caution .callout-title {
+    color: #fbbf24;
+  }
+}
+
+/* Danger / Important */
+.callout-danger,
+.callout-important {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-danger,
+  .callout-important {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.callout-danger .callout-title,
+.callout-important .callout-title {
+  color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-danger .callout-title,
+  .callout-important .callout-title {
+    color: #f87171;
+  }
+}
+
+/* Example */
+.callout-example {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-example {
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+}
+
+.callout-example .callout-title {
+  color: #7c3aed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-example .callout-title {
+    color: #a78bfa;
+  }
+}
+
+/* Quote / Cite */
+.callout-quote,
+.callout-cite {
+  border-color: #6b7280;
+  background-color: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-quote,
+  .callout-cite {
+    background-color: rgba(107, 114, 128, 0.1);
+  }
+}
+
+.callout-quote .callout-title,
+.callout-cite .callout-title {
+  color: #4b5563;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-quote .callout-title,
+  .callout-cite .callout-title {
+    color: #9ca3af;
+  }
+}
+
+/* Abstract / Summary / TL;DR */
+.callout-abstract,
+.callout-summary,
+.callout-tldr {
+  border-color: #06b6d4;
+  background-color: #ecfeff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-abstract,
+  .callout-summary,
+  .callout-tldr {
+    background-color: rgba(6, 182, 212, 0.1);
+  }
+}
+
+.callout-abstract .callout-title,
+.callout-summary .callout-title,
+.callout-tldr .callout-title {
+  color: #0891b2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-abstract .callout-title,
+  .callout-summary .callout-title,
+  .callout-tldr .callout-title {
+    color: #22d3ee;
+  }
+}
+
+/* Success / Check / Done / Todo */
+.callout-success,
+.callout-check,
+.callout-done,
+.callout-todo {
+  border-color: #22c55e;
+  background-color: #f0fdf4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-success,
+  .callout-check,
+  .callout-done,
+  .callout-todo {
+    background-color: rgba(34, 197, 94, 0.1);
+  }
+}
+
+.callout-success .callout-title,
+.callout-check .callout-title,
+.callout-done .callout-title,
+.callout-todo .callout-title {
+  color: #16a34a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-success .callout-title,
+  .callout-check .callout-title,
+  .callout-done .callout-title,
+  .callout-todo .callout-title {
+    color: #4ade80;
+  }
+}
+
+/* Question / Help / FAQ */
+.callout-question,
+.callout-help,
+.callout-faq {
+  border-color: #f97316;
+  background-color: #fff7ed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-question,
+  .callout-help,
+  .callout-faq {
+    background-color: rgba(249, 115, 22, 0.1);
+  }
+}
+
+.callout-question .callout-title,
+.callout-help .callout-title,
+.callout-faq .callout-title {
+  color: #ea580c;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-question .callout-title,
+  .callout-help .callout-title,
+  .callout-faq .callout-title {
+    color: #fb923c;
+  }
+}
+
+/* Failure / Fail / Missing */
+.callout-failure,
+.callout-fail,
+.callout-missing {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-failure,
+  .callout-fail,
+  .callout-missing {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.callout-failure .callout-title,
+.callout-fail .callout-title,
+.callout-missing .callout-title {
+  color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-failure .callout-title,
+  .callout-fail .callout-title,
+  .callout-missing .callout-title {
+    color: #f87171;
+  }
+}
+
+/* Bug */
+.callout-bug {
+  border-color: #e11d48;
+  background-color: #fff1f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-bug {
+    background-color: rgba(225, 29, 72, 0.1);
+  }
+}
+
+.callout-bug .callout-title {
+  color: #be123c;
+}
+
+@media (prefers-color-scheme: dark) {
+  .callout-bug .callout-title {
+    color: #fb7185;
+  }
+}
+
+/* ============================================
+   Prose overrides for code blocks inside viewer
+   ============================================ */
+
+.prose pre {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+}
+
+.prose pre code {
+  padding: 1rem;
+  display: block;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+/* Dark mode syntax highlighting overrides */
+@media (prefers-color-scheme: dark) {
+  .hljs {
+    background: #161b22;
+    color: #c9d1d9;
+  }
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-section,
+  .hljs-link {
+    color: #ff7b72;
+  }
+  .hljs-string,
+  .hljs-title,
+  .hljs-name,
+  .hljs-type,
+  .hljs-attribute,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-addition,
+  .hljs-variable,
+  .hljs-template-tag,
+  .hljs-template-variable {
+    color: #a5d6ff;
+  }
+  .hljs-comment,
+  .hljs-quote,
+  .hljs-deletion,
+  .hljs-meta {
+    color: #8b949e;
+  }
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-title,
+  .hljs-section,
+  .hljs-doctag,
+  .hljs-type,
+  .hljs-name,
+  .hljs-strong {
+    font-weight: bold;
+  }
+  .hljs-number {
+    color: #79c0ff;
+  }
+  .hljs-built_in {
+    color: #d2a8ff;
+  }
+  .hljs-title.function_ {
+    color: #d2a8ff;
+  }
+}
+
+/* Task list styling */
+.prose ul:has(> li > input[type="checkbox"]) {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose li:has(> input[type="checkbox"]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+  }
 }

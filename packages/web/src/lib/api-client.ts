@@ -1,5 +1,5 @@
 import ky, { type KyInstance, type BeforeRequestHook, type BeforeRetryHook } from 'ky';
-import { useAuthStore } from './stores/auth.store.js';
+import { useAuthStore } from './stores/auth.store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
