@@ -8,6 +8,20 @@
       "when": 1770571400507,
       "tag": "0000_remarkable_mandroid",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770571978105,
+      "tag": "0001_flowery_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770572406653,
+      "tag": "0002_amazing_beyonder",
+      "breakpoints": true
     }
   ]
 }

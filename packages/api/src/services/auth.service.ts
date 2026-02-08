@@ -13,10 +13,13 @@ import {
   NotFoundError,
   ConflictError,
   ValidationError,
+  RateLimitError,
 } from '../utils/errors.js';
 import type { User } from '@doc-store/shared';
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const MAX_FAILED_LOGIN_ATTEMPTS = 10;
+const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * Convert a DB user row to a public User object.
@@ -166,13 +169,44 @@ export async function login(
     throw new AuthenticationError('Account is disabled');
   }
 
-  // 2. Verify password
+  // 2. Check brute force lockout
+  if (
+    user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS &&
+    user.lastFailedLoginAt &&
+    Date.now() - user.lastFailedLoginAt.getTime() < FAILED_LOGIN_WINDOW_MS
+  ) {
+    throw new RateLimitError('Account temporarily locked due to too many failed login attempts. Try again in 15 minutes.');
+  }
+
+  // 3. Verify password
   const valid = await verifyPassword(user.passwordHash, password);
   if (!valid) {
+    // Track failed attempt
+    const now = new Date();
+    const withinWindow =
+      user.lastFailedLoginAt &&
+      now.getTime() - user.lastFailedLoginAt.getTime() < FAILED_LOGIN_WINDOW_MS;
+
+    await db
+      .update(users)
+      .set({
+        failedLoginAttempts: withinWindow ? user.failedLoginAttempts + 1 : 1,
+        lastFailedLoginAt: now,
+      })
+      .where(eq(users.id, user.id));
+
     throw new AuthenticationError('Invalid email or password');
   }
 
-  // 3. Create session
+  // 4. Reset failed login attempts on success
+  if (user.failedLoginAttempts > 0) {
+    await db
+      .update(users)
+      .set({ failedLoginAttempts: 0, lastFailedLoginAt: null })
+      .where(eq(users.id, user.id));
+  }
+
+  // 5. Create session
   const { accessToken, refreshToken } = await createSession(
     user.id,
     user.email,

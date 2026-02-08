@@ -45,3 +45,36 @@ export const authResponseSchema = z.object({
   user: userSchema,
   accessToken: z.string(),
 });
+
+// Vault schemas
+
+export const createVaultSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Vault name is required')
+    .max(100, 'Vault name must be at most 100 characters'),
+  description: z
+    .string()
+    .max(1000, 'Description must be at most 1000 characters')
+    .optional(),
+});
+
+export const updateVaultSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Vault name is required')
+    .max(100, 'Vault name must be at most 100 characters')
+    .optional(),
+  description: z
+    .string()
+    .max(1000, 'Description must be at most 1000 characters')
+    .nullable()
+    .optional(),
+});
+
+// Document schemas
+
+export const putDocumentSchema = z.object({
+  content: z.string().max(10 * 1024 * 1024, 'Content must be at most 10MB'),
+  createIntermediateFolders: z.boolean().optional().default(false),
+});

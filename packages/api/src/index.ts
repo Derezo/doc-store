@@ -7,6 +7,8 @@ import type { HealthCheckResponse } from '@doc-store/shared';
 import { errorHandler } from './middleware/error-handler.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
+import vaultRoutes from './routes/vaults.routes.js';
+import documentRoutes from './routes/documents.routes.js';
 
 const logger = pino({
   transport: config.NODE_ENV === 'development'
@@ -33,6 +35,12 @@ app.use(`${API_PREFIX}/auth`, authRoutes);
 
 // User routes
 app.use(`${API_PREFIX}/users`, userRoutes);
+
+// Vault routes (includes tree endpoint)
+app.use(`${API_PREFIX}/vaults`, vaultRoutes);
+
+// Document routes (nested under vaults)
+app.use(`${API_PREFIX}/vaults/:vaultId/documents`, documentRoutes);
 
 // Global error handler (must be registered last)
 app.use(errorHandler);
