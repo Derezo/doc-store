@@ -2,13 +2,13 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { watch, type FSWatcher } from 'chokidar';
 import { eq, and } from 'drizzle-orm';
-import pino from 'pino';
 import { config } from '../config.js';
 import { db } from '../db/index.js';
 import { users, vaults, documents } from '../db/schema.js';
 import * as documentService from './document.service.js';
+import { logger as rootLogger } from '../utils/logger.js';
 
-const logger = pino({ name: 'sync-service' });
+const logger = rootLogger.child({ module: 'sync-service' });
 
 /**
  * Debounce map: tracks pending file operations to avoid rapid duplicate processing.

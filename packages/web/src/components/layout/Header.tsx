@@ -11,6 +11,7 @@ import {
   Settings,
   Key,
   LogOut,
+  Mail,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -108,6 +109,15 @@ export function Header({
             </div>
 
             <Link
+              href="/settings"
+              onClick={() => setUserMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+
+            <Link
               href="/settings/api-keys"
               onClick={() => setUserMenuOpen(false)}
               className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
@@ -115,6 +125,17 @@ export function Header({
               <Key className="h-4 w-4" />
               <span>API Keys</span>
             </Link>
+
+            {user?.role === 'admin' && (
+              <Link
+                href="/admin/invitations"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                <Mail className="h-4 w-4" />
+                <span>Invitations</span>
+              </Link>
+            )}
 
             <button
               onClick={() => {

@@ -2,12 +2,12 @@ import { Router, type Request, type Response } from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import pino from 'pino';
 import { authenticate, type WebDavAuthResult } from './authenticator.js';
 import * as documentService from '../services/document.service.js';
 import { markRecentlyWritten } from '../services/sync.service.js';
+import { logger as rootLogger } from '../utils/logger.js';
 
-const logger = pino({ name: 'webdav' });
+const logger = rootLogger.child({ module: 'webdav' });
 
 // ── CORS origins for Obsidian ──────────────────────────────────────────
 

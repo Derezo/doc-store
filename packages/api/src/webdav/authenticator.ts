@@ -5,9 +5,9 @@ import * as apiKeyService from '../services/api-key.service.js';
 import * as vaultService from '../services/vault.service.js';
 import { AuthenticationError, AuthorizationError } from '../utils/errors.js';
 import { getVaultPath } from '../services/filesystem.service.js';
-import pino from 'pino';
+import { logger as rootLogger } from '../utils/logger.js';
 
-const logger = pino({ name: 'webdav-auth' });
+const logger = rootLogger.child({ module: 'webdav-auth' });
 
 export interface WebDavAuthResult {
   userId: string;

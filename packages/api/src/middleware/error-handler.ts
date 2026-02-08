@@ -1,8 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors.js';
-import pino from 'pino';
-
-const logger = pino({ name: 'error-handler' });
+import { logger } from '../utils/logger.js';
 
 /**
  * Global error handler for Express 5.
