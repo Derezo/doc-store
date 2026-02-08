@@ -1,0 +1,35 @@
+{
+  "name": "@doc-store/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@doc-store/shared": "*",
+    "argon2": "^0.41",
+    "chokidar": "^4.0",
+    "drizzle-orm": "^0.38",
+    "express": "^5",
+    "express-rate-limit": "^7.5",
+    "gray-matter": "^4.0",
+    "jose": "^6.0",
+    "nodemailer": "^6.9",
+    "pg": "^8.13",
+    "pino": "^9.0",
+    "zod": "^3.24"
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "@types/node": "^22",
+    "@types/nodemailer": "^6",
+    "@types/pg": "^8",
+    "drizzle-kit": "^0.30",
+    "pino-pretty": "^13",
+    "tsx": "^4",
+    "typescript": "^5.7"
+  }
+}

@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: docstore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: docstore
+      POSTGRES_USER: docstore
+      POSTGRES_PASSWORD: docstore_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
