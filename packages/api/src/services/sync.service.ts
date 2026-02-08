@@ -61,7 +61,7 @@ function isRecentlyWritten(absPath: string): boolean {
  *
  * Returns null if the path doesn't match the expected layout.
  */
-function parseFilePath(
+export function parseFilePath(
   absPath: string,
 ): { userId: string; vaultSlug: string; docPath: string } | null {
   const dataDir = path.resolve(config.DATA_DIR);
@@ -88,7 +88,7 @@ function parseFilePath(
  * Check if a path should be ignored by the watcher.
  * Ignores: .obsidian/ directory contents, non-.md files, hidden files.
  */
-function shouldIgnore(absPath: string): boolean {
+export function shouldIgnore(absPath: string): boolean {
   // Skip .obsidian directories
   if (absPath.includes(`${path.sep}.obsidian${path.sep}`) || absPath.endsWith(`${path.sep}.obsidian`)) {
     return true;

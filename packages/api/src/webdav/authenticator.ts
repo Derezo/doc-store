@@ -19,7 +19,7 @@ export interface WebDavAuthResult {
 /**
  * Parse Basic Auth header and return email + password (API key).
  */
-function parseBasicAuth(authHeader: string): { email: string; apiKey: string } {
+export function parseBasicAuth(authHeader: string): { email: string; apiKey: string } {
   if (!authHeader.startsWith('Basic ')) {
     throw new AuthenticationError('WebDAV requires Basic authentication');
   }

@@ -59,7 +59,7 @@ function toPublicVersion(row: typeof documentVersions.$inferSelect): DocumentVer
 /**
  * Compute SHA-256 hash of content.
  */
-function computeHash(content: string): string {
+export function computeHash(content: string): string {
   return crypto.createHash('sha256').update(content, 'utf-8').digest('hex');
 }
 

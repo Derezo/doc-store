@@ -24,7 +24,7 @@ function toPublicVault(row: typeof vaults.$inferSelect): Vault {
  * Generate a URL-safe slug from a vault name.
  * Lowercase, spaces to hyphens, remove special chars, dedupe hyphens.
  */
-function slugify(name: string): string {
+export function slugify(name: string): string {
   return name
     .toLowerCase()
     .trim()

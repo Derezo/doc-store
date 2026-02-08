@@ -17,7 +17,7 @@ const KEY_PREFIX_LENGTH = 8;
 /**
  * Generate a cryptographically random alphanumeric string of the specified length.
  */
-function generateAlphanumeric(length: number): string {
+export function generateAlphanumeric(length: number): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const bytes = crypto.randomBytes(length * 2); // extra bytes to account for filtering
   let result = '';

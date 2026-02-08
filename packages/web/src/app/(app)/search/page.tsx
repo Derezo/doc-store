@@ -4,14 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Search, FileText, ChevronRight, Loader2, Tag } from 'lucide-react';
-
-/** Sanitize snippets: only allow <mark> tags for highlighting. */
-function sanitizeSnippet(html: string): string {
-  const escaped = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return escaped
-    .replace(/&lt;mark&gt;/gi, '<mark>')
-    .replace(/&lt;\/mark&gt;/gi, '</mark>');
-}
+import { sanitizeSnippet } from '@/lib/utils';
 import { useSearch } from '@/hooks/useSearch';
 import { useVaultStore } from '@/lib/stores/vault.store';
 

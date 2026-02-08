@@ -8,6 +8,7 @@ import { useDocument } from '@/hooks/useDocument';
 import { useEditorStore, type EditorMode } from '@/lib/stores/editor.store';
 import { Breadcrumbs } from '@/components/browser/Breadcrumbs';
 import { MarkdownViewer } from '@/components/viewer/MarkdownViewer';
+import { formatFileSize } from '@/lib/utils';
 import { EditorModeToggle } from '@/components/editor/EditorModeToggle';
 import { api } from '@/lib/api-client';
 import { useVaultStore } from '@/lib/stores/vault.store';
@@ -449,8 +450,3 @@ function extractFileName(path: string): string {
   return name.replace(/\.md$/i, '');
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
