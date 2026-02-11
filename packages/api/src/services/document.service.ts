@@ -492,7 +492,7 @@ export async function move(
     await db
       .update(documents)
       .set({
-        path: sql`${destPrefix} || substring(${documents.path} from ${sourcePrefix.length + 1})`,
+        path: sql`${destPrefix} || substr(${documents.path}, length(${sourcePrefix}) + 1)`,
         updatedAt: new Date(),
       })
       .where(
