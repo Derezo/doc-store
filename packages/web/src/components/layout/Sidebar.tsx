@@ -5,7 +5,11 @@ import type { Vault, TreeNode } from '@doc-store/shared';
 import { VaultSwitcher } from './VaultSwitcher';
 import { FileTree } from '@/components/browser/FileTree';
 import { NewFileDialog } from '@/components/editor/NewFileDialog';
-import { X, Loader2, FilePlus } from 'lucide-react';
+import { X, Loader2, FilePlus, FolderPlus } from 'lucide-react';
+import { NewFolderDialog } from '@/components/browser/NewFolderDialog';
+import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
+import { useVaultStore } from '@/lib/stores/vault.store';
 
 interface SidebarProps {
   vaults: Vault[];
@@ -32,6 +36,8 @@ export function Sidebar({
   onClose,
 }: SidebarProps) {
   const [showNewFile, setShowNewFile] = useState(false);
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const { fetchTree } = useVaultStore();
 
   // Close sidebar on Escape key
   useEffect(() => {
@@ -95,6 +101,13 @@ export function Sidebar({
               <FilePlus className="h-4 w-4" />
               <span>New file</span>
             </button>
+            <button
+              onClick={() => setShowNewFolder(true)}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span>New folder</span>
+            </button>
           </div>
         )}
 
@@ -128,6 +141,22 @@ export function Sidebar({
           vaultId={currentVault.id}
           isOpen={showNewFile}
           onClose={() => setShowNewFile(false)}
+        />
+      )}
+
+      {/* New folder dialog */}
+      {currentVault && (
+        <NewFolderDialog
+          isOpen={showNewFolder}
+          parentPath=""
+          onConfirm={async (folderPath) => {
+            await api.post(`api/v1/vaults/${currentVault.id}/documents/directories`, {
+              json: { path: folderPath },
+            });
+            toast.success('Folder created');
+            fetchTree(currentVault.id);
+          }}
+          onClose={() => setShowNewFolder(false)}
         />
       )}
     </>

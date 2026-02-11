@@ -56,11 +56,10 @@ export function useContextMenu() {
   );
 
   const closeContextMenu = useCallback(() => {
-    setState({
+    setState(prev => ({
+      ...prev,
       isOpen: false,
-      position: { x: 0, y: 0 },
-      targetNode: null,
-    });
+    }));
   }, []);
 
   // Close on Escape key
