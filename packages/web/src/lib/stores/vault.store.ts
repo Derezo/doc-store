@@ -12,14 +12,14 @@ interface VaultState {
   treeLoading: boolean;
 
   fetchVaults: () => Promise<void>;
-  setCurrentVault: (vault: Vault | null) => void;
-  fetchTree: (vaultId: string) => Promise<void>;
-  createVault: (name: string, description?: string) => Promise<Vault>;
-  updateVault: (vaultId: string, data: { name?: string; description?: string | null; baseDir?: string | null }) => Promise<Vault>;
+  setCurrentVault: (_vault: Vault | null) => void;
+  fetchTree: (_vaultId: string) => Promise<void>;
+  createVault: (_name: string, _description?: string) => Promise<Vault>;
+  updateVault: (_vaultId: string, _data: { name?: string; description?: string | null; baseDir?: string | null }) => Promise<Vault>;
   clearTree: () => void;
 }
 
-export const useVaultStore = create<VaultState>((set, get) => ({
+export const useVaultStore = create<VaultState>((set, _get) => ({
   vaults: [],
   currentVault: null,
   tree: null,

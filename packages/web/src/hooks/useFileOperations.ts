@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { useVaultStore } from '@/lib/stores/vault.store';
@@ -21,7 +20,6 @@ interface UseFileOperationsOptions {
  * Automatically refreshes the tree and shows toast notifications.
  */
 export function useFileOperations({ vaultId, onSuccess }: UseFileOperationsOptions) {
-  const router = useRouter();
   const { fetchTree } = useVaultStore();
 
   const refreshTree = useCallback(async () => {

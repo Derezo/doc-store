@@ -31,7 +31,7 @@ export default function ApiKeysPage() {
     try {
       const data = await api.get('api/v1/api-keys').json<{ apiKeys: ApiKeyMeta[] }>();
       setApiKeys(data.apiKeys);
-    } catch (err: any) {
+    } catch {
       setError('Failed to load API keys');
     }
   }, []);

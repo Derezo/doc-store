@@ -154,7 +154,7 @@ export function FileTree({ tree, vaultId, activePath }: FileTreeProps) {
   );
 
   // Calculate children count for delete warnings
-  const getChildrenCount = useCallback((node: TreeNode): number => {
+  const getChildrenCount = (node: TreeNode): number => {
     if (node.type !== 'directory' || !node.children) return 0;
     let count = node.children.length;
     for (const child of node.children) {
@@ -163,7 +163,7 @@ export function FileTree({ tree, vaultId, activePath }: FileTreeProps) {
       }
     }
     return count;
-  }, []);
+  };
 
   // Context menu handlers
   const handleRename = useCallback(() => {
@@ -254,6 +254,21 @@ export function FileTree({ tree, vaultId, activePath }: FileTreeProps) {
     [fileOperations],
   );
 
+  // Handle rename operation
+  const handleRenameOperation = useCallback(
+    async (currentPath: string, newName: string, isFile: boolean) => {
+      const renamedPath = await fileOperations.renameItem(currentPath, newName, isFile);
+
+      // If we renamed the currently active document, navigate to the new path
+      if (renamedPath && activePath === currentPath) {
+        router.replace(`/vaults/${vaultId}/${renamedPath}`);
+      }
+
+      setRenamingPath(null);
+    },
+    [fileOperations, activePath, vaultId, router],
+  );
+
   if (tree.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
@@ -269,21 +284,6 @@ export function FileTree({ tree, vaultId, activePath }: FileTreeProps) {
   }
 
   const sorted = sortTreeNodes(tree);
-
-  // Handle rename operation
-  const handleRenameOperation = useCallback(
-    async (currentPath: string, newName: string, isFile: boolean) => {
-      const renamedPath = await fileOperations.renameItem(currentPath, newName, isFile);
-
-      // If we renamed the currently active document, navigate to the new path
-      if (renamedPath && activePath === currentPath) {
-        router.replace(`/vaults/${vaultId}/${renamedPath}`);
-      }
-
-      setRenamingPath(null);
-    },
-    [fileOperations, activePath, vaultId, router],
-  );
 
   const contextValue = {
     openContextMenu,

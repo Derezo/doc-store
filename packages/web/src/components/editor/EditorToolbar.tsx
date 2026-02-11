@@ -42,6 +42,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       // Pre-fill with existing link URL if cursor is on a link
       const attrs = editor.getAttributes('link');
       if (attrs.href) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLinkUrl(attrs.href);
       }
       linkInputRef.current.focus();

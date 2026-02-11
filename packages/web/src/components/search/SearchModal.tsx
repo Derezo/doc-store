@@ -29,6 +29,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery('');
       setSelectedIndex(0);
       // Delay focus to ensure the modal is rendered
@@ -40,6 +41,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   // Reset selected index when results change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIndex(0);
   }, [results]);
 

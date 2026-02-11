@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Search, FileText, ChevronRight, Loader2, Tag } from 'lucide-react';
 import { sanitizeSnippet } from '@/lib/utils';
@@ -13,7 +13,6 @@ import { useVaultStore } from '@/lib/stores/vault.store';
  * Supports vault filtering, tag filtering, and pagination.
  */
 export default function SearchPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') ?? '';
 

@@ -5,7 +5,7 @@ import type { EditorMode } from '@/lib/stores/editor.store';
 
 interface EditorModeToggleProps {
   mode: EditorMode;
-  onChange: (mode: EditorMode) => void;
+  onChange: (_mode: EditorMode) => void;
   hasUnsavedChanges?: boolean;
 }
 

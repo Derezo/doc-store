@@ -16,7 +16,7 @@ interface UseSearchResult {
   total: number;
   loading: boolean;
   error: string | null;
-  search: (query: string, offset?: number) => Promise<void>;
+  search: (_query: string, _offset?: number) => Promise<void>;
 }
 
 /**

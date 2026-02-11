@@ -9,7 +9,6 @@ import {
   Plus,
   BookOpen,
   Clock,
-  FileText,
   Loader2,
   X,
 } from 'lucide-react';

@@ -20,7 +20,7 @@ import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } 
 
 interface CodeMirrorEditorProps {
   content: string;
-  onChange: (content: string) => void;
+  onChange: (_content: string) => void;
   editable?: boolean;
 }
 
@@ -37,7 +37,7 @@ function isDarkMode(): boolean {
  * Build CodeMirror extensions based on current mode.
  */
 function buildExtensions(
-  onChange: (content: string) => void,
+  onChange: (_content: string) => void,
   editable: boolean,
 ): Extension[] {
   const extensions: Extension[] = [

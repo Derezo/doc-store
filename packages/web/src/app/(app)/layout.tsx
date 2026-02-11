@@ -16,7 +16,7 @@ export default function AppLayout({
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { user, isAuthenticated, logout, refresh } = useAuthStore();
+  const { user, isAuthenticated, refresh } = useAuthStore();
   const {
     vaults,
     currentVault,
@@ -72,6 +72,7 @@ export default function AppLayout({
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
   }, [pathname]);
 

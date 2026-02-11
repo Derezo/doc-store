@@ -16,10 +16,10 @@ interface EditorState {
   saveError: string | null;
   lastSavedAt: Date | null;
 
-  setMode: (mode: EditorMode) => void;
-  setContent: (content: string) => void;
-  loadDocument: (content: string, hash: string) => void;
-  save: (vaultId: string, path: string) => Promise<boolean>;
+  setMode: (_mode: EditorMode) => void;
+  setContent: (_content: string) => void;
+  loadDocument: (_content: string, _hash: string) => void;
+  save: (_vaultId: string, _path: string) => Promise<boolean>;
   reset: () => void;
 }
 

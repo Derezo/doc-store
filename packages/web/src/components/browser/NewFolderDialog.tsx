@@ -6,7 +6,7 @@ import { FolderPlus, Loader2, X } from 'lucide-react';
 export interface NewFolderDialogProps {
   isOpen: boolean;
   parentPath: string;
-  onConfirm: (folderName: string) => void;
+  onConfirm: (_folderName: string) => void;
   onClose: () => void;
 }
 

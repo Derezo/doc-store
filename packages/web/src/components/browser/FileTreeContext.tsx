@@ -4,10 +4,10 @@ import { createContext, useContext } from 'react';
 import type { TreeNode } from '@doc-store/shared';
 
 export interface FileTreeContextValue {
-  openContextMenu: (event: React.MouseEvent | { clientX: number; clientY: number }, node: TreeNode) => void;
+  openContextMenu: (_event: React.MouseEvent | { clientX: number; clientY: number }, _node: TreeNode) => void;
   renamingPath: string | null;
-  setRenamingPath: (path: string | null) => void;
-  handleRename: (currentPath: string, newName: string, isFile: boolean) => Promise<void>;
+  setRenamingPath: (_path: string | null) => void;
+  handleRename: (_currentPath: string, _newName: string, _isFile: boolean) => Promise<void>;
   vaultId: string;
 }
 

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useVaultStore } from '@/lib/stores/vault.store';
 import { Settings, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { TreeNode } from '@doc-store/shared';
 
 interface VaultSettingsProps {
   vaultId: string;

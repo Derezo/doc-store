@@ -8,7 +8,7 @@ interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
 
-  setAuth: (data: AuthResponse) => void;
+  setAuth: (_data: AuthResponse) => void;
   logout: () => void;
   refresh: () => Promise<boolean>;
 }

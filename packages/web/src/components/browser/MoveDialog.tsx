@@ -9,7 +9,7 @@ export interface MoveDialogProps {
   sourcePath: string;
   vaultId: string;
   tree: TreeNode[];
-  onConfirm: (destinationDir: string) => void;
+  onConfirm: (_destinationDir: string) => void;
   onClose: () => void;
 }
 
@@ -28,6 +28,7 @@ export function MoveDialog({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDir('');
     }
   }, [isOpen]);
@@ -47,7 +48,7 @@ export function MoveDialog({
 
   // Filter out the source item and its children for directory moves
   const isDirectory = tree.some((node) => findNodeByPath(node, sourcePath)?.type === 'directory');
-  const sourceNode = findNodeInTree(tree, sourcePath);
+  const _sourceNode = findNodeInTree(tree, sourcePath);
 
   const handleConfirm = () => {
     onConfirm(selectedDir);
@@ -122,7 +123,7 @@ export function MoveDialog({
 interface DirectoryTreeItemProps {
   node: TreeNode;
   selectedDir: string;
-  onSelect: (path: string) => void;
+  onSelect: (_path: string) => void;
   excludePath?: string;
   depth: number;
 }

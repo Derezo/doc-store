@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import '@/__tests__/helpers/next-router';
 import { FileTree } from './FileTree';
 import type { TreeNode } from '@doc-store/shared';

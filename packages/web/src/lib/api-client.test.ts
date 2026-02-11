@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/__tests__/mocks/server';
 import { api } from './api-client';
@@ -115,7 +115,7 @@ describe('api-client', () => {
 
     try {
       await api.post('api/v1/auth/login', { json: { email: 'test@example.com', password: 'wrong' } }).json();
-    } catch (error) {
+    } catch {
       // Expected to fail
     }
 

@@ -9,7 +9,7 @@ export interface CopyDialogProps {
   sourcePath: string;
   vaultId: string;
   tree: TreeNode[];
-  onConfirm: (destinationDir: string) => void;
+  onConfirm: (_destinationDir: string) => void;
   onClose: () => void;
 }
 
@@ -28,6 +28,7 @@ export function CopyDialog({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDir('');
     }
   }, [isOpen]);
@@ -117,7 +118,7 @@ export function CopyDialog({
 interface DirectoryTreeItemProps {
   node: TreeNode;
   selectedDir: string;
-  onSelect: (path: string) => void;
+  onSelect: (_path: string) => void;
   depth: number;
 }
 

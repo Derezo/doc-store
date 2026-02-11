@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 export interface RenameInputProps {
   currentName: string;
   isFile: boolean;
-  onSubmit: (newName: string) => void;
+  onSubmit: (_newName: string) => void;
   onCancel: () => void;
 }
 

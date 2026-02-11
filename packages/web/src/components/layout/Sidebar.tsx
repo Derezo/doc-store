@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { Vault, TreeNode } from '@doc-store/shared';
 import { VaultSwitcher } from './VaultSwitcher';
 import { FileTree } from '@/components/browser/FileTree';
@@ -71,12 +72,12 @@ export function Sidebar({
       >
         {/* Sidebar header */}
         <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-3 dark:border-zinc-800">
-          <a
+          <Link
             href="/vaults"
             className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100"
           >
             doc-store
-          </a>
+          </Link>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 lg:hidden"

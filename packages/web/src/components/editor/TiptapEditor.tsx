@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -21,7 +21,7 @@ const lowlight = createLowlight(common);
 
 interface TiptapEditorProps {
   content: string;
-  onChange: (markdown: string) => void;
+  onChange: (_markdown: string) => void;
   editable?: boolean;
 }
 

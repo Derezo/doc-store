@@ -137,6 +137,7 @@ export function MarkdownViewer({ content, vaultId, className }: MarkdownViewerPr
     // Images with lazy loading
     img({ src, alt, ...props }) {
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt ?? ''}
