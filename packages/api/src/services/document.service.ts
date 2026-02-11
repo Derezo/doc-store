@@ -1,9 +1,10 @@
 import crypto from 'node:crypto';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { eq, and, like, asc, desc, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { documents, documentVersions } from '../db/schema.js';
-import { NotFoundError } from '../utils/errors.js';
+import { NotFoundError, ConflictError } from '../utils/errors.js';
 import * as filesystemService from './filesystem.service.js';
 import * as vaultService from './vault.service.js';
 import { markRecentlyWritten } from './sync.service.js';
@@ -18,6 +19,7 @@ import type {
   DocumentVersion,
   DocumentListItem,
   TreeNode,
+  FileOperationResponse,
 } from '@doc-store/shared';
 
 /**
@@ -231,7 +233,7 @@ export async function put(
 }
 
 /**
- * Delete a document from both filesystem and database.
+ * Delete a document or directory from both filesystem and database.
  */
 export async function remove(
   userId: string,
@@ -242,26 +244,49 @@ export async function remove(
   const vault = await vaultService.getRow(userId, vaultId);
   const vaultPath = filesystemService.getVaultPath(userId, vault.slug);
 
-  // Find document in DB
+  // Try to find document in DB (file case)
   const [doc] = await db
     .select()
     .from(documents)
     .where(and(eq(documents.vaultId, vaultId), eq(documents.path, docPath)))
     .limit(1);
 
-  if (!doc) {
-    throw new NotFoundError(`Document not found: ${docPath}`);
+  if (doc) {
+    // File deletion
+    await filesystemService.deleteFile(vaultPath, docPath);
+
+    // Mark file as recently written so the sync watcher doesn't double-process
+    const absDeletePath = path.resolve(vaultPath, docPath);
+    markRecentlyWritten(absDeletePath);
+
+    // Delete from DB (cascade deletes versions)
+    await db.delete(documents).where(eq(documents.id, doc.id));
+  } else {
+    // Check if it's a directory
+    const pathType = await filesystemService.pathExists(vaultPath, docPath);
+    if (pathType === 'directory') {
+      // Directory deletion
+      // Delete all child documents from DB
+      const escapedPath = docPath.replace(/%/g, '\\%').replace(/_/g, '\\_');
+      await db
+        .delete(documents)
+        .where(
+          and(
+            eq(documents.vaultId, vaultId),
+            like(documents.path, `${escapedPath}/%`),
+          ),
+        );
+
+      // Delete directory from filesystem
+      await filesystemService.deleteDirectory(vaultPath, docPath);
+
+      // Mark as recently written
+      const absDeletePath = path.resolve(vaultPath, docPath);
+      markRecentlyWritten(absDeletePath);
+    } else {
+      throw new NotFoundError(`Document or directory not found: ${docPath}`);
+    }
   }
-
-  // Delete from filesystem
-  await filesystemService.deleteFile(vaultPath, docPath);
-
-  // Mark file as recently written so the sync watcher doesn't double-process
-  const absDeletePath = path.resolve(vaultPath, docPath);
-  markRecentlyWritten(absDeletePath);
-
-  // Delete from DB (cascade deletes versions)
-  await db.delete(documents).where(eq(documents.id, doc.id));
 }
 
 /**
@@ -398,4 +423,175 @@ export async function getVersions(
     .orderBy(desc(documentVersions.versionNum));
 
   return rows.map(toPublicVersion);
+}
+
+/**
+ * Move/rename a file or directory.
+ */
+export async function move(
+  userId: string,
+  vaultId: string,
+  sourcePath: string,
+  destPath: string,
+  overwrite: boolean = false,
+): Promise<FileOperationResponse> {
+  // Verify vault ownership
+  const vault = await vaultService.getRow(userId, vaultId);
+  const vaultPath = filesystemService.getVaultPath(userId, vault.slug);
+
+  // Check if source exists and determine type
+  const sourceType = await filesystemService.pathExists(vaultPath, sourcePath);
+  if (!sourceType) {
+    throw new NotFoundError(`Source not found: ${sourcePath}`);
+  }
+
+  // Check if destination exists
+  const destExists = await filesystemService.pathExists(vaultPath, destPath);
+  if (destExists && !overwrite) {
+    throw new ConflictError(`Destination already exists: ${destPath}`);
+  }
+
+  if (sourceType === 'file') {
+    // Check that document exists in DB
+    const [doc] = await db
+      .select()
+      .from(documents)
+      .where(and(eq(documents.vaultId, vaultId), eq(documents.path, sourcePath)))
+      .limit(1);
+
+    if (!doc) {
+      throw new NotFoundError(`Document not found in database: ${sourcePath}`);
+    }
+
+    // Move file on disk
+    await filesystemService.moveFile(vaultPath, sourcePath, destPath);
+
+    // Mark both paths as recently written
+    const absSourcePath = path.resolve(vaultPath, sourcePath);
+    const absDestPath = path.resolve(vaultPath, destPath);
+    markRecentlyWritten(absSourcePath);
+    markRecentlyWritten(absDestPath);
+
+    // Update document path in DB
+    await db
+      .update(documents)
+      .set({ path: destPath, updatedAt: new Date() })
+      .where(eq(documents.id, doc.id));
+  } else {
+    // Directory move
+    await filesystemService.moveDirectory(vaultPath, sourcePath, destPath);
+
+    // Mark destination as recently written
+    const absDestPath = path.resolve(vaultPath, destPath);
+    markRecentlyWritten(absDestPath);
+
+    // Update all document paths in DB
+    const sourcePrefix = `${sourcePath}/`;
+    const destPrefix = `${destPath}/`;
+
+    await db
+      .update(documents)
+      .set({
+        path: sql`${destPrefix} || substring(${documents.path} from ${sourcePrefix.length + 1})`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(documents.vaultId, vaultId),
+          like(documents.path, `${sourcePath.replace(/%/g, '\\%').replace(/_/g, '\\_')}/%`),
+        ),
+      );
+  }
+
+  return {
+    message: 'Move operation completed successfully',
+    source: sourcePath,
+    destination: destPath,
+  };
+}
+
+/**
+ * Copy a file or directory.
+ */
+export async function copy(
+  userId: string,
+  vaultId: string,
+  sourcePath: string,
+  destPath: string,
+  overwrite: boolean = false,
+): Promise<FileOperationResponse> {
+  // Verify vault ownership
+  const vault = await vaultService.getRow(userId, vaultId);
+  const vaultPath = filesystemService.getVaultPath(userId, vault.slug);
+
+  // Check if source exists and determine type
+  const sourceType = await filesystemService.pathExists(vaultPath, sourcePath);
+  if (!sourceType) {
+    throw new NotFoundError(`Source not found: ${sourcePath}`);
+  }
+
+  // Check if destination exists
+  const destExists = await filesystemService.pathExists(vaultPath, destPath);
+  if (destExists && !overwrite) {
+    throw new ConflictError(`Destination already exists: ${destPath}`);
+  }
+
+  if (sourceType === 'file') {
+    // Read source content and create at destination
+    const { content } = await get(userId, vaultId, sourcePath);
+    await put(userId, vaultId, destPath, content, 'api');
+  } else {
+    // Directory copy
+    await filesystemService.copyDirectory(vaultPath, sourcePath, destPath);
+
+    // Walk destination and create DB entries for all .md files
+    const absDestPath = path.resolve(vaultPath, destPath);
+
+    async function walkAndSync(dir: string, prefix: string): Promise<void> {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue;
+
+        const entryPath = prefix ? `${prefix}/${entry.name}` : entry.name;
+        const absEntryPath = path.join(dir, entry.name);
+
+        if (entry.isDirectory()) {
+          await walkAndSync(absEntryPath, entryPath);
+        } else if (entry.name.endsWith('.md')) {
+          const content = await fs.readFile(absEntryPath, 'utf-8');
+          await put(userId, vaultId, entryPath, content, 'api');
+        }
+      }
+    }
+
+    await walkAndSync(absDestPath, destPath);
+  }
+
+  return {
+    message: 'Copy operation completed successfully',
+    source: sourcePath,
+    destination: destPath,
+  };
+}
+
+/**
+ * Create an empty directory.
+ */
+export async function createDirectory(
+  userId: string,
+  vaultId: string,
+  dirPath: string,
+): Promise<{ message: string; path: string }> {
+  // Verify vault ownership
+  const vault = await vaultService.getRow(userId, vaultId);
+  const vaultPath = filesystemService.getVaultPath(userId, vault.slug);
+
+  // Create directory
+  await filesystemService.createDirectory(vaultPath, dirPath);
+
+  return {
+    message: 'Directory created successfully',
+    path: dirPath,
+  };
 }

@@ -73,6 +73,11 @@ export const updateVaultSchema = z.object({
     .max(1000, 'Description must be at most 1000 characters')
     .nullable()
     .optional(),
+  baseDir: z
+    .string()
+    .max(255, 'Base directory must be at most 255 characters')
+    .nullable()
+    .optional(),
 }).openapi('UpdateVaultRequest');
 
 // Document schemas
@@ -104,6 +109,28 @@ export const updateApiKeySchema = z.object({
     .optional(),
   isActive: z.boolean().optional(),
 }).openapi('UpdateApiKeyRequest');
+
+// File operation schemas
+
+// Reusable path validator that rejects path traversal, null bytes, leading slashes, and backslashes
+const safePath = z.string().min(1).max(512).refine(
+  (val) => !val.includes('..') && !val.includes('\0') && !val.startsWith('/') && !val.includes('\\'),
+  { message: 'Path contains invalid characters or sequences' }
+);
+
+export const moveDocumentSchema = z.object({
+  destination: safePath,
+  overwrite: z.boolean().optional().default(false),
+}).openapi('MoveDocumentRequest');
+
+export const copyDocumentSchema = z.object({
+  destination: safePath,
+  overwrite: z.boolean().optional().default(false),
+}).openapi('CopyDocumentRequest');
+
+export const createDirectorySchema = z.object({
+  path: safePath,
+}).openapi('CreateDirectoryRequest');
 
 // Search schemas
 

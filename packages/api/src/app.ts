@@ -1,7 +1,9 @@
 import express, { type Request, type Response } from 'express';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { API_PREFIX } from '@doc-store/shared';
 import type { HealthCheckResponse } from '@doc-store/shared';
+import { config } from './config.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { securityHeaders } from './middleware/security-headers.js';
 import { requestLogger } from './middleware/request-logger.js';
@@ -17,9 +19,22 @@ import swaggerRouter from './openapi/index.js';
 
 const app = express();
 
+// Trust first proxy (Nginx) so X-Forwarded-For works for rate limiting and logging
+if (config.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // ── Global middleware ────────────────────────────────────────────────
 app.use(securityHeaders);
 app.use(requestLogger);
+
+// ── CORS for REST API ───────────────────────────────────────────────
+// In production, Nginx proxies everything through the same origin so CORS
+// isn't needed. In development, the frontend (WEB_URL) runs on a different port.
+app.use('/api', cors({
+  origin: config.WEB_URL,
+  credentials: true,
+}));
 
 // ── WebDAV routes (mounted BEFORE express.json() to allow raw body streaming) ──
 // WebDAV PUT requests send raw file content that should not be parsed as JSON.

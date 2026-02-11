@@ -98,6 +98,7 @@ export const vaults = pgTable(
     name: varchar('name', { length: 100 }).notNull(),
     slug: varchar('slug', { length: 100 }).notNull(),
     description: text('description'),
+    baseDir: varchar('base_dir', { length: 255 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

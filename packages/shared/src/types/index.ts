@@ -46,6 +46,7 @@ export interface Vault {
   name: string;
   slug: string;
   description: string | null;
+  baseDir: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +84,7 @@ export interface TreeNode {
   path: string;
   type: 'file' | 'directory';
   children?: TreeNode[];
+  dimmed?: boolean;
 }
 
 export interface DocumentListItem {
@@ -137,4 +139,26 @@ export interface SearchResponse {
   results: SearchResult[];
   total: number;
   query: string;
+}
+
+// File operation types
+
+export interface MoveDocumentRequest {
+  destination: string;
+  overwrite?: boolean;
+}
+
+export interface CopyDocumentRequest {
+  destination: string;
+  overwrite?: boolean;
+}
+
+export interface CreateDirectoryRequest {
+  path: string;
+}
+
+export interface FileOperationResponse {
+  message: string;
+  source: string;
+  destination: string;
 }

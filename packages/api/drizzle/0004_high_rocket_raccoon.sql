@@ -1,0 +1,1 @@
+ALTER TABLE "vaults" ADD COLUMN "base_dir" varchar(255);

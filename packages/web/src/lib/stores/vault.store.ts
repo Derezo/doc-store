@@ -15,6 +15,7 @@ interface VaultState {
   setCurrentVault: (vault: Vault | null) => void;
   fetchTree: (vaultId: string) => Promise<void>;
   createVault: (name: string, description?: string) => Promise<Vault>;
+  updateVault: (vaultId: string, data: { name?: string; description?: string | null; baseDir?: string | null }) => Promise<Vault>;
   clearTree: () => void;
 }
 
@@ -62,6 +63,19 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const vault = data.vault;
     set((state) => ({ vaults: [...state.vaults, vault] }));
     return vault;
+  },
+
+  updateVault: async (vaultId: string, data: { name?: string; description?: string | null; baseDir?: string | null }) => {
+    const result = await api
+      .patch(`api/v1/vaults/${vaultId}`, { json: data })
+      .json<{ vault: Vault }>();
+
+    set((state) => ({
+      vaults: state.vaults.map((v) => v.id === vaultId ? result.vault : v),
+      currentVault: state.currentVault?.id === vaultId ? result.vault : state.currentVault,
+    }));
+
+    return result.vault;
   },
 
   clearTree: () => {

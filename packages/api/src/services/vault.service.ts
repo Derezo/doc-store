@@ -15,6 +15,7 @@ function toPublicVault(row: typeof vaults.$inferSelect): Vault {
     name: row.name,
     slug: row.slug,
     description: row.description,
+    baseDir: row.baseDir ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -132,7 +133,7 @@ export async function getRow(
 export async function update(
   userId: string,
   vaultId: string,
-  data: { name?: string; description?: string | null },
+  data: { name?: string; description?: string | null; baseDir?: string | null },
 ): Promise<Vault> {
   // Verify ownership
   const existing = await getRow(userId, vaultId);
@@ -149,6 +150,10 @@ export async function update(
 
   if (data.description !== undefined) {
     updateData.description = data.description;
+  }
+
+  if (data.baseDir !== undefined) {
+    updateData.baseDir = data.baseDir;
   }
 
   const [updated] = await db

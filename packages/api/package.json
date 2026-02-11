@@ -23,6 +23,7 @@
     "argon2": "^0.41",
     "chokidar": "^4.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "drizzle-orm": "^0.38",
     "express": "^5",
     "express-rate-limit": "^7.5",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5",
     "@types/node": "^22",
     "@types/nodemailer": "^6",

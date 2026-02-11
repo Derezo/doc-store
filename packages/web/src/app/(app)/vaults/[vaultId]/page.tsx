@@ -7,6 +7,7 @@ import { useDocument } from '@/hooks/useDocument';
 import { FileTree } from '@/components/browser/FileTree';
 import { Breadcrumbs } from '@/components/browser/Breadcrumbs';
 import { MarkdownViewer } from '@/components/viewer/MarkdownViewer';
+import { VaultSettings } from '@/components/vault/VaultSettings';
 import { api } from '@/lib/api-client';
 import type { DocumentListItem } from '@doc-store/shared';
 import {
@@ -14,6 +15,7 @@ import {
   FileText,
   Clock,
   BookOpen,
+  Settings,
 } from 'lucide-react';
 
 /**
@@ -25,6 +27,7 @@ export default function VaultBrowserPage() {
   const vaultId = params.vaultId as string;
   const { currentVault, tree, treeLoading, loading } = useVault(vaultId);
   const [documentCount, setDocumentCount] = useState<number | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Try to load README.md for the vault
   const { content: readmeContent, loading: readmeLoading } = useDocument(
@@ -72,17 +75,26 @@ export default function VaultBrowserPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
-            {documentCount !== null && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
+              {documentCount !== null && (
+                <span className="flex items-center gap-1">
+                  <FileText className="h-3.5 w-3.5" />
+                  {documentCount} {documentCount === 1 ? 'document' : 'documents'}
+                </span>
+              )}
               <span className="flex items-center gap-1">
-                <FileText className="h-3.5 w-3.5" />
-                {documentCount} {documentCount === 1 ? 'document' : 'documents'}
+                <Clock className="h-3.5 w-3.5" />
+                Updated {new Date(currentVault.updatedAt).toLocaleDateString()}
               </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              Updated {new Date(currentVault.updatedAt).toLocaleDateString()}
-            </span>
+            </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+              aria-label="Vault settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -105,6 +117,13 @@ export default function VaultBrowserPage() {
           />
         )}
       </div>
+
+      {/* Vault settings dialog */}
+      <VaultSettings
+        vaultId={vaultId}
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   );
 }

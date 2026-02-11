@@ -96,6 +96,25 @@ function resolveSafePath(basePath: string, relativePath: string): string {
 }
 
 /**
+ * Clean up empty parent directories after file deletion.
+ * Walks up the directory tree from the given path to the vault root,
+ * removing empty directories.
+ */
+async function cleanupEmptyParentDirs(absPath: string, vaultPath: string): Promise<void> {
+  let dir = path.dirname(absPath);
+  const vaultRoot = path.resolve(vaultPath);
+  while (dir !== vaultRoot && dir.startsWith(vaultRoot)) {
+    try {
+      await fs.rmdir(dir);
+      dir = path.dirname(dir);
+    } catch {
+      // Directory not empty or other error — stop cleaning
+      break;
+    }
+  }
+}
+
+/**
  * Get the absolute path for a vault directory.
  */
 export function getVaultPath(userId: string, vaultSlug: string): string {
@@ -186,17 +205,7 @@ export async function deleteFile(
   }
 
   // Clean up empty parent directories (up to vault root)
-  let dir = path.dirname(absPath);
-  const vaultRoot = path.resolve(vaultPath);
-  while (dir !== vaultRoot && dir.startsWith(vaultRoot)) {
-    try {
-      await fs.rmdir(dir);
-      dir = path.dirname(dir);
-    } catch {
-      // Directory not empty or other error — stop cleaning
-      break;
-    }
-  }
+  await cleanupEmptyParentDirs(absPath, vaultPath);
 }
 
 /**
@@ -244,7 +253,7 @@ export async function listFiles(
         });
         await walk(absEntryPath, entryRelPath);
       } else {
-        const stat = await fs.stat(absEntryPath);
+        const stat = await fs.lstat(absEntryPath);
         entries.push({
           name: entry.name,
           path: entryRelPath,
@@ -279,6 +288,33 @@ export async function fileExists(
 }
 
 /**
+ * Check if a path exists and return its type.
+ * Returns 'file', 'directory', or false if it doesn't exist.
+ */
+export async function pathExists(
+  vaultPath: string,
+  relativePath: string,
+): Promise<'file' | 'directory' | false> {
+  validateDirPath(relativePath);
+  const absPath = resolveSafePath(vaultPath, relativePath);
+
+  try {
+    const stat = await fs.lstat(absPath);
+    if (stat.isDirectory()) {
+      return 'directory';
+    } else if (stat.isFile()) {
+      return 'file';
+    }
+    return false;
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
  * Delete an entire vault directory recursively.
  */
 export async function deleteVaultDir(userId: string, vaultSlug: string): Promise<void> {
@@ -291,4 +327,127 @@ export async function deleteVaultDir(userId: string, vaultSlug: string): Promise
     }
     throw err;
   }
+}
+
+/**
+ * Move/rename a file or directory atomically.
+ * Creates parent directories for destination if needed.
+ */
+export async function moveFile(
+  vaultPath: string,
+  sourcePath: string,
+  destPath: string,
+): Promise<void> {
+  validatePath(sourcePath);
+  validatePath(destPath);
+
+  const absSource = resolveSafePath(vaultPath, sourcePath);
+  const absDest = resolveSafePath(vaultPath, destPath);
+
+  // Ensure destination parent directory exists
+  const destParent = path.dirname(absDest);
+  await fs.mkdir(destParent, { recursive: true });
+
+  try {
+    await fs.rename(absSource, absDest);
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      throw new NotFoundError(`Source file not found: ${sourcePath}`);
+    }
+    throw err;
+  }
+
+  // Clean up empty parent directories from source
+  await cleanupEmptyParentDirs(absSource, vaultPath);
+}
+
+/**
+ * Move/rename a directory.
+ * Creates parent directories for destination if needed.
+ */
+export async function moveDirectory(
+  vaultPath: string,
+  sourcePath: string,
+  destPath: string,
+): Promise<void> {
+  validateDirPath(sourcePath);
+  validateDirPath(destPath);
+
+  const absSource = resolveSafePath(vaultPath, sourcePath);
+  const absDest = resolveSafePath(vaultPath, destPath);
+
+  // Ensure destination parent directory exists
+  const destParent = path.dirname(absDest);
+  await fs.mkdir(destParent, { recursive: true });
+
+  try {
+    await fs.rename(absSource, absDest);
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      throw new NotFoundError(`Source directory not found: ${sourcePath}`);
+    }
+    throw err;
+  }
+
+  // Clean up empty parent directories from source
+  await cleanupEmptyParentDirs(absSource, vaultPath);
+}
+
+/**
+ * Copy a directory recursively.
+ */
+export async function copyDirectory(
+  vaultPath: string,
+  sourcePath: string,
+  destPath: string,
+): Promise<void> {
+  validateDirPath(sourcePath);
+  validateDirPath(destPath);
+
+  const absSource = resolveSafePath(vaultPath, sourcePath);
+  const absDest = resolveSafePath(vaultPath, destPath);
+
+  try {
+    await fs.cp(absSource, absDest, { recursive: true, dereference: false });
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      throw new NotFoundError(`Source directory not found: ${sourcePath}`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Create a directory (with parent directories if needed).
+ */
+export async function createDirectory(
+  vaultPath: string,
+  dirPath: string,
+): Promise<void> {
+  validateDirPath(dirPath);
+  const absPath = resolveSafePath(vaultPath, dirPath);
+  await fs.mkdir(absPath, { recursive: true });
+}
+
+/**
+ * Delete a directory recursively.
+ */
+export async function deleteDirectory(
+  vaultPath: string,
+  dirPath: string,
+): Promise<void> {
+  validateDirPath(dirPath);
+  const absPath = resolveSafePath(vaultPath, dirPath);
+
+  try {
+    await fs.rm(absPath, { recursive: true });
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      throw new NotFoundError(`Directory not found: ${dirPath}`);
+    }
+    throw err;
+  }
+
+  // Clean up empty parent directories
+  await cleanupEmptyParentDirs(absPath, vaultPath);
 }

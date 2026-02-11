@@ -24,7 +24,7 @@ module.exports = {
     {
       name: 'doc-store-web',
       script: 'node_modules/.bin/next',
-      args: 'start -p 3000',
+      args: 'start -p 3200',
       cwd: `${__dirname}/packages/web`,
       env: {
         NODE_ENV: 'production',
