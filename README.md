@@ -122,6 +122,7 @@ All variables are configured in `packages/api/src/config.ts` and validated with 
 | `SMTP_USER` | -- | SMTP username (optional) |
 | `SMTP_PASS` | -- | SMTP password (optional) |
 | `SMTP_FROM` | -- | From address for outgoing emails (optional) |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api/v1` | API base URL baked into the Next.js frontend at build time. Must be set before `npm run build`. |
 
 ## Development
 
@@ -170,6 +171,35 @@ npm run create-admin -w packages/api -- --email user@example.com --password secr
 # Rebuild the full-text search index
 npm run backfill-search -w packages/api
 ```
+
+### Testing
+
+The project uses [Vitest](https://vitest.dev/) for unit and integration tests and [Playwright](https://playwright.dev/) for end-to-end tests.
+
+```bash
+# Run all tests across workspaces
+npm test
+
+# Run tests for a specific package
+npm test -w packages/shared
+npm test -w packages/api
+npm test -w packages/web
+
+# Watch mode (re-runs on file changes)
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
+
+# API-only: unit tests vs integration tests
+npm run test:unit -w packages/api          # Pure function + middleware tests
+npm run test:integration -w packages/api   # HTTP integration tests (requires running DB)
+
+# End-to-end tests (requires running dev servers + DB)
+npm run test:e2e
+```
+
+Integration tests skip gracefully when the test database is unavailable. E2E tests require both dev servers running (`npm run dev`) and a seeded database.
 
 ## Obsidian Sync Setup
 
@@ -272,9 +302,9 @@ The OpenAPI spec is generated from the Zod schemas used for request validation, 
 
 For LLM/AI agent integration, see [LLM_GUIDE.md](./LLM_GUIDE.md) which provides a self-contained reference with curl examples and tips for programmatic access.
 
-## Deployment
+## Self-Hosting
 
-### Production build
+### Building for production
 
 ```bash
 npm run build
@@ -313,7 +343,7 @@ The configuration handles:
 - HTTP-to-HTTPS redirect
 - Security headers (HSTS, X-Frame-Options, X-Content-Type-Options)
 
-### Production checklist
+### Self-hosting checklist
 
 - Set a strong `JWT_SECRET` (at least 32 random characters)
 - Set `NODE_ENV=production`
@@ -327,12 +357,11 @@ The configuration handles:
 ```
 doc-store/
 ├── docker-compose.yml          # PostgreSQL 17 container
-├── ecosystem.config.cjs        # PM2 production config
+├── ecosystem.config.cjs        # PM2 process manager config
 ├── nginx/
 │   └── doc-store.conf          # Nginx reverse proxy config
 ├── scripts/
-│   ├── backup.sh               # Backup script
-│   └── deploy.sh               # Deployment script
+│   └── backup.sh               # Backup script
 ├── packages/
 │   ├── shared/                 # Shared package (@doc-store/shared)
 │   │   └── src/

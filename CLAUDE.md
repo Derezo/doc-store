@@ -38,7 +38,7 @@ cd packages/api && npx drizzle-kit studio     # Visual DB explorer
 npm run create-admin -w packages/api -- --email X --password Y --name Z
 npm run backfill-search -w packages/api       # Rebuild search index
 
-# Production
+# Self-hosting (build + PM2)
 npm run build && pm2 start ecosystem.config.cjs
 ```
 

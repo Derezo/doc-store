@@ -29,3 +29,22 @@ Thumbs.db
 
 # Data
 /data/
+
+# Production environment files
+.env.production
+.env.staging
+
+# Production deployment (site-specific configs)
+deploy/
+scripts/deploy-production.sh
+
+# Logs (PM2, deployment)
+logs/
+
+# Backups
+backups/
+
+# Alternate package manager lockfiles
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock
